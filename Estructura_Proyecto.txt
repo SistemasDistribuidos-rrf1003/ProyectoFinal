@@ -1,0 +1,509 @@
+================================================================================
+          BANKSphere - PLATAFORMA BANCARIA DIGITAL INTELIGENTE
+               ESTRUCTURA DE PROYECTO Y GUÍA DE DESARROLLO PASO A PASO
+================================================================================
+
+Este documento contiene la estructura de archivos detallada y el plan de
+desarrollo paso a paso para "BankSphere", una plataforma fintech moderna que
+sigue principios de diseño limpio, arquitectura por capas y patrones de
+sistemas distribuidos (Event-Driven Architecture con RabbitMQ y microservicios
+integrados mediante un proyecto Maven Multi-Module).
+
+Se ha diseñado esta estructura basándose en el diagrama de arquitectura
+distribuida (involucrando colas de mensajería, bases de datos analíticas,
+proxies de autenticación y servicios especializados) pero adaptado de forma
+práctica y elegante a las tecnologías obligatorias (Spring Boot, Thymeleaf,
+Spring Security, PostgreSQL, Docker y RabbitMQ).
+
+================================================================================
+INDICE DE SECCIONES:
+1. Arquitectura y Patrón del Sistema Distribuido
+2. Estructura de Directorios del Proyecto (Árbol Completo)
+3. Detalle de Módulos Maven
+4. Configuración de Infraestructura (Docker, DB, RabbitMQ)
+5. Guía de Desarrollo Paso a Paso (Fases 1 a 10)
+================================================================================
+
+--------------------------------------------------------------------------------
+1. ARQUITECTURA Y PATRÓN DEL SISTEMA DISTRIBUIDO
+--------------------------------------------------------------------------------
+Para cumplir con los criterios de "Sistemas Distribuidos" y las tecnologías del
+proyecto, BankSphere no es un monolito simple. Se estructura como un sistema
+modular y reactivo compuesto por:
+
+* Módulo Core (Web y API): Se encarga del login, dashboard principal,
+  gestión de clientes, cuentas, transferencias y la API de Open Banking.
+* Módulo AntiFraude & Analytics: Procesa en tiempo real (de forma asíncrona)
+  las transacciones para calcular riesgos utilizando reglas y disparar alertas.
+* Módulo de Notificaciones (WebSockets & Mail): Escucha eventos distribuidos
+  del sistema para enviar emails y notificaciones en tiempo real al frontend.
+* RabbitMQ (Message Broker): El pegamento distribuido. Cuando se solicita una
+  transferencia, el Core publica un evento. El motor AntiFraude y el servicio
+  de notificaciones consumen dicho evento de forma independiente y asíncrona.
+
+Esquema de flujo distribuido:
+[Cliente Web] ---> (HTTP) ---> [Core API/Thymeleaf]
+                                     |
+                               (Publica Evento)
+                                     v
+                             [RabbitMQ Broker]
+                             /               \
+              (Consume Evento)               (Consume Evento)
+                     v                               v
+         [AntiFraud & Risk Engine]         [Notification & WebSockets]
+             (Calcula Riesgo)                (Envía Mail / WS Alert)
+
+
+--------------------------------------------------------------------------------
+2. ESTRUCTURA DE DIRECTORIOS DEL PROYECTO (ÁRBOL COMPLETO)
+--------------------------------------------------------------------------------
+A continuación se presenta el árbol de directorios de la solución basada en
+un proyecto Maven Multi-Module:
+
+banksphere-parent/ (Directorio Raíz)
+├── pom.xml (POM padre, gestiona dependencias globales)
+├── docker-compose.yml (Orquestación local de PostgreSQL, RabbitMQ, pgAdmin)
+├── Dockerfile (Multi-stage build para empaquetado final)
+├── README.md (Documentación técnica y guías de ejecución)
+│
+├── .github/
+│   └── workflows/
+│       └── ci-cd.yml (Pipeline GitHub Actions: Build, Test y SonarQube)
+│
+├── databases/
+│   └── init.sql (Script de inicialización para BD PostgreSQL con datos semilla)
+│
+├── banksphere-common/ (Clases compartidas: DTOs, Excepciones, Constantes)
+│   ├── pom.xml
+│   └── src/
+│       └── main/java/com/banksphere/common/
+│           ├── dto/
+│           │   ├── UserDTO.java
+│           │   ├── AccountDTO.java
+│           │   ├── TransferDTO.java
+│           │   └── FraudAlertDTO.java
+│           └── exception/
+│               ├── GlobalExceptionHandler.java
+│               ├── ResourceNotFoundException.java
+│               ├── InsufficientFundsException.java
+│               └── FraudBlockException.java
+│
+├── banksphere-core/ (Core Bancario: Dashboard, Cuentas, Transferencias, Seguridad)
+│   ├── pom.xml
+│   └── src/
+│       ├── main/
+│       │   ├── java/com/banksphere/core/
+│       │   │   ├── BankSphereCoreApplication.java
+│       │   │   │
+│       │   │   ├── config/
+│       │   │   │   ├── SecurityConfig.java (Spring Security: BCrypt, CSRF, Roles)
+│       │   │   │   ├── RabbitMQConfig.java (Definición de colas, exchanges y routing keys)
+│       │   │   │   └── DatabaseConfig.java (Configuración de JPA e Hibernate)
+│       │   │   │
+│       │   │   ├── controller/
+│       │   │   │   ├── web/
+│       │   │   │   │   ├── DashboardController.java (Landing, Resumen Financiero, Chart.js)
+│       │   │   │   │   ├── AuthController.java (Login, Registro, Recuperación)
+│       │   │   │   │   ├── UserController.java (CRUD Administración de Usuarios)
+│       │   │   │   │   ├── AccountController.java (CRUD Gestión de Cuentas)
+│       │   │   │   │   └── TransferController.java (Formularios de Transferencias)
+│       │   │   │   └── api/ (Open Banking API - REST Endpoints)
+│       │   │   │       ├── UserRestController.java
+│       │   │   │       ├── AccountRestController.java
+│       │   │   │       └── TransferRestController.java
+│       │   │   │
+│       │   │   ├── entity/ (Entidades JPA correspondientes a las tablas de la BD)
+│       │   │   │   ├── User.java (id, nombre, email, password, rol, estado, etc.)
+│       │   │   │   ├── Account.java (id, IBAN, tipoCuenta, saldo, moneda, usuario)
+│       │   │   │   ├── Transfer.java (id, cuentaOrigen, cuentaDestino, importe, estado)
+│       │   │   │   └── KycDetail.java (KYC: Verificación, nivel de riesgo, documentos)
+│       │   │   │
+│       │   │   ├── repository/ (Interfaces Spring Data JPA)
+│       │   │   │   ├── UserRepository.java
+│       │   │   │   ├── AccountRepository.java
+│       │   │   │   └── TransferRepository.java
+│       │   │   │
+│       │   │   └── service/ (Lógica de negocio y transaccionalidad)
+│       │   │       ├── UserService.java
+│       │   │       ├── AccountService.java
+│       │   │       ├── TransferService.java (Con lógica de cálculo de comisiones)
+│       │   │       └── KycService.java (Servicio de Validación de identidad y AML)
+│       │   │
+│       │   └── resources/
+│       │       ├── application.yml (Configuración del Core: DB, RabbitMQ, Puertos)
+│       │       │
+│       │       ├── static/ (Recursos estáticos para UI avanzada y moderna)
+│       │       │   ├── css/
+│       │       │   │   ├── variables.css (Paleta moderna HSL, tema oscuro y variables de diseño)
+│       │       │   │   ├── dashboard.css (Ajustes de Grid, Sidebar fluida y Glassmorphism)
+│       │       │   │   └── auth.css (Diseño minimalista para Login y Registro)
+│       │       │   ├── js/
+│       │       │   │   ├── chart-renderer.js (Lógica de renderizado dinámico de Chart.js)
+│       │       │   │   ├── websockets-client.js (Conexión Stomp/SockJS para notificaciones)
+│       │       │   │   └── validation.js (Validación de formularios reactivos del lado del cliente)
+│       │       │   └── assets/ (Imágenes, logotipos e iconos SVG personalizados)
+│       │       │
+│       │       └── templates/ (Vistas Thymeleaf modularizadas con fragmentos reutilizables)
+│       │           ├── layouts/
+│       │           │   └── main-layout.html (Base con Sidebar dinámica, Navbar y Footer)
+│       │           ├── fragments/
+│       │           │   ├── sidebar.html (Navegación inteligente con roles ADMIN/USER/ANALYST)
+│       │           │   └── header.html (Avatar, notificaciones en tiempo real, cambio de tema)
+│       │           ├── auth/
+│       │           │   ├── login.html (Pantalla de acceso segura con protección CSRF)
+│       │           │   └── register.html (Formulario con validación y KYC inicial)
+│       │           ├── dashboard/
+│       │           │   └── index.html (Resumen, tarjetas bancarias visuales, balance, gráficos)
+│       │           ├── users/
+│       │           │   ├── list.html (Vista CRUD con filtros, paginación e indicadores de estado)
+│       │           │   └── form.html (Creación y edición de usuarios)
+│       │           ├── accounts/
+│       │           │   ├── list.html (Vista de tarjetas de crédito/débito en 3D glassmorphism)
+│       │           │   └── detail.html (Movimientos asociados y balances detallados)
+│       │           ├── transfers/
+│       │           │   ├── new.html (Formulario de transferencias SEPA/SWIFT, cálculo de comisiones)
+│       │           │   └── history.html (Historial y comprobante digital interactivo)
+│       │           └── error/
+│       │               ├── 403.html (Página personalizada de acceso denegado por roles)
+│       │               ├── 404.html (Página interactiva de recurso no encontrado)
+│       │               └── 500.html (Página de error interno amigable)
+│       │
+│       └── test/ (Pruebas unitarias y de integración)
+│           └── java/com/banksphere/core/
+│               ├── service/
+│               │   ├── AccountServiceTest.java
+│               │   └── TransferServiceTest.java
+│               └── controller/
+│                   └── TransferControllerIntegrationTest.java
+│
+├── banksphere-antifraud/ (Motor AntiFraude Inteligente y Analytics)
+│   ├── pom.xml
+│   └── src/
+│       ├── main/
+│       │   ├── java/com/banksphere/antifraud/
+│       │   │   ├── BankSphereAntiFraudApplication.java
+│       │   │   │
+│       │   │   ├── config/
+│       │   │   │   └── RabbitMQConsumerConfig.java
+│       │   │   │
+│       │   │   ├── consumer/
+│       │   │   │   └── TransactionConsumer.java (Escucha transacciones para evaluarlas)
+│       │   │   │
+│       │   │   ├── engine/
+│       │   │   │   └── RiskRulesEngine.java (Lógica de reglas: transferencias > 10K, límite operativo)
+│       │   │   │
+│       │   │   ├── model/
+│       │   │   │   └── FraudAlert.java (Entidad NoSQL/Relacional para alertas)
+│       │   │   │
+│       │   │   ├── controller/
+│       │   │   │   └── AntiFraudRestController.java (Endpoints para analistas financieros)
+│       │   │   │
+│       │   │   └── service/
+│       │   │       └── AntiFraudService.java
+│       │   │
+│       │   └── resources/
+│       │       └── application.yml (Puerto 8082, monitorización de colas)
+│       │
+│       └── test/
+│           └── java/com/banksphere/antifraud/
+│               └── RiskRulesEngineTest.java
+│
+└── banksphere-notifications/ (Microservicio distribuidor de alertas en tiempo real y correos)
+    ├── pom.xml
+    └── src/
+        ├── main/
+        │   ├── java/com/banksphere/notifications/
+        │   │   ├── BankSphereNotificationsApplication.java
+        │   │   │
+        │   │   ├── config/
+        │   │   │   ├── WebSocketConfig.java (Mensajería STOMP/SockJS sobre WS)
+        │   │   │   └── MailConfig.java (Configuración de SMTP Server para correos)
+        │   │   │
+        │   │   ├── consumer/
+        │   │   │   └── NotificationEventConsumer.java (Consume eventos de transferencias y alertas)
+        │   │   │
+        │   │   ├── controller/
+        │   │   │   └── WebSocketChatController.java (Chat distribuido de soporte en vivo)
+        │   │   │
+        │   │   └── service/
+        │   │       ├── MailSenderService.java (Envío de notificaciones de seguridad vía Spring Mail)
+        │   │       └── RealTimeNotificationService.java (Push notifications al frontend)
+        │   │
+        │   └── resources/
+        │       └── application.yml (Puerto 8083, configuración de SMTP ficticio o Gmail)
+
+
+--------------------------------------------------------------------------------
+3. DETALLE DE MÓDULOS MAVEN (Estructuración de pom.xml)
+--------------------------------------------------------------------------------
+El proyecto cuenta con un archivo 'pom.xml' raíz que coordina el ciclo de vida.
+
+* pom.xml (Raíz - Parent):
+  Declara el empaquetamiento <packaging>pom</packaging>.
+  Define las versiones compartidas (Spring Boot 3.x, Java 17, Lombok, MapStruct).
+  Contiene la etiqueta <modules>:
+    - <module>banksphere-common</module>
+    - <module>banksphere-core</module>
+    - <module>banksphere-antifraud</module>
+    - <module>banksphere-notifications</module>
+
+* banksphere-common/pom.xml:
+  No contiene dependencias web o base de datos pesadas. Solo dependencias ligeras
+  como Lombok, Validation API y Jackson para serialización de DTOs.
+
+* banksphere-core/pom.xml:
+  Depende de 'banksphere-common'.
+  Incluye: `spring-boot-starter-web`, `spring-boot-starter-thymeleaf`,
+  `spring-boot-starter-security`, `spring-boot-starter-data-jpa`,
+  `postgresql` (driver), `spring-boot-starter-amqp` (RabbitMQ Client).
+
+* banksphere-antifraud/pom.xml:
+  Depende de 'banksphere-common'.
+  Incluye: `spring-boot-starter-web` (para REST API de analistas),
+  `spring-boot-starter-amqp` (RabbitMQ Client).
+
+* banksphere-notifications/pom.xml:
+  Depende de 'banksphere-common'.
+  Incluye: `spring-boot-starter-websocket`, `spring-boot-starter-mail`,
+  `spring-boot-starter-amqp`.
+
+
+--------------------------------------------------------------------------------
+4. CONFIGURACIÓN DE INFRAESTRUCTURA (Docker, DB, RabbitMQ)
+--------------------------------------------------------------------------------
+Para ejecutar el entorno distribuido en un solo paso, se utiliza Docker Compose.
+
+* Archivo: docker-compose.yml
+  Este archivo levanta la base de datos distribuida, el broker de mensajería
+  y herramientas de administración visual.
+  ------------------------------------------------------------------------------
+  services:
+    # 1. Base de Datos Principal (PostgreSQL)
+    postgres-db:
+      image: postgres:15-alpine
+      container_name: banksphere-db
+      environment:
+        POSTGRES_DB: banksphere_db
+        POSTGRES_USER: admin
+        POSTGRES_PASSWORD: secretpassword
+      ports:
+        - "5432:5432"
+      volumes:
+        - ./databases/init.sql:/docker-entrypoint-initdb.d/init.sql
+        - postgres_data:/var/lib/postgresql/data
+
+    # 2. Administrador visual de base de datos
+    pgadmin:
+      image: dpage/pgadmin4
+      container_name: banksphere-pgadmin
+      environment:
+        PGADMIN_DEFAULT_EMAIL: admin@banksphere.com
+        PGADMIN_DEFAULT_PASSWORD: admin
+      ports:
+        - "5050:80"
+      depends_on:
+        - postgres-db
+
+    # 3. Message Broker (RabbitMQ) con panel de control web
+    rabbitmq:
+      image: rabbitmq:3-management-alpine
+      container_name: banksphere-mq
+      ports:
+        - "5672:5672"      # Puerto de comunicación de datos AMQP
+        - "15672:15672"    # Puerto del Dashboard Web de RabbitMQ
+      environment:
+        RABBITMQ_DEFAULT_USER: guest
+        RABBITMQ_DEFAULT_PASS: guest
+
+    # 4. Servidor SMTP ficticio (Mailpit) para captura visual de correos de prueba
+    mailpit:
+      image: axllent/mailpit
+      container_name: banksphere-mail
+      ports:
+        - "8025:8025"      # Panel Web de visualización de emails
+        - "1025:1025"      # Servidor SMTP sin autenticación
+
+  volumes:
+    postgres_data:
+  ------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+5. GUÍA DE DESARROLLO PASO A PASO (FASES)
+--------------------------------------------------------------------------------
+Sigue este orden secuencial para programar tu solución de principio a fin,
+reduciendo la fricción y asegurando la estabilidad en cada entrega.
+
+================================================================================
+FASE 1: INFRAESTRUCTURA INICIAL Y ENTORNO DE TRABAJO (DÍA 1-2)
+================================================================================
+* Objetivo: Tener la base distribuida y el esqueleto Maven compilando.
+* Pasos a seguir:
+  1. Instalar Java 17 y configurar Maven en la máquina de desarrollo.
+  2. Crear el directorio raíz del proyecto y el archivo general `pom.xml`.
+  3. Crear las carpetas para cada uno de los sub-módulos y sus respectivos `pom.xml`.
+  4. Crear el archivo `docker-compose.yml` en la raíz tal y como se detalla arriba.
+  5. Ejecutar en terminal `docker compose up -d` para verificar que Postgres,
+     pgAdmin, RabbitMQ y Mailpit levantan correctamente.
+  6. Escribir el script de base de datos `databases/init.sql` con la definición de
+     esquemas preliminares y la inyección de datos semilla (usuarios semilla,
+     cuentas con saldos ficticios para pruebas rápidas).
+
+================================================================================
+FASE 2: SEGURIDAD, BASE DE DATOS Y GESTIÓN DE CLIENTES (DÍA 3-4)
+================================================================================
+* Objetivo: Lograr que el sistema autentique usuarios y valide roles (Spring Security).
+* Pasos a seguir:
+  1. En el módulo `banksphere-core`, escribir las entidades de persistencia JPA:
+     `User.java` (Usuario) y `KycDetail.java` (AML/KYC).
+  2. Implementar `UserRepository` y escribir el servicio `UserService` que cargue
+     los usuarios desde base de datos (`UserDetailsService`).
+  3. Configurar la seguridad en `SecurityConfig.java`:
+     - Contraseñas cifradas con `BCryptPasswordEncoder`.
+     - Definición de rutas libres (Landing, recursos estáticos).
+     - Rutas protegidas según el Rol del usuario (ADMIN para CRUD de usuarios,
+       ANALYST para alertas de fraude, USER para transacciones y dashboard).
+     - Habilitar protección CSRF y páginas de login/logout personalizadas.
+  4. Desarrollar las vistas Thymeleaf para `login.html` y `register.html`.
+  5. Completar el CRUD de Mantenimiento de Usuarios (`UserController`):
+     - Tabla dinámica con paginación, filtros de búsqueda por nombre/documento
+       y control de estados (Activo, Suspendido, En Verificación).
+
+================================================================================
+FASE 3: GESTIÓN DE CUENTAS BANCARIAS (CRUD #1) Y COMPONENTE VISUAL (DÍA 5)
+================================================================================
+* Objetivo: Poder crear cuentas asociadas a usuarios y representarlas visualmente.
+* Pasos a seguir:
+  1. Definir la entidad `Account.java` (CuentaBancaria) con una relación
+     ManyToOne hacia `User.java`. Generar IBANes aleatorios y controlar monedas (EUR/USD).
+  2. Crear el controlador `AccountController` para la creación y gestión de cuentas:
+     - Regla de negocio: Un usuario normal solo puede ver sus cuentas, pero un
+       administrador (ADMIN) puede crear o suspender cuentas de cualquier usuario.
+  3. Crear la pantalla `accounts/list.html` con un diseño altamente estético.
+     - Diseñar las cuentas bancarias como tarjetas virtuales 3D (estilo Glassmorphism)
+       con colores dinámicos según el tipo de cuenta (Ahorro, Corriente, Business).
+     - Implementar animaciones CSS en hover (efecto de rotación e iluminación).
+
+================================================================================
+FASE 4: TRANSFERENCIAS Y SISTEMA DISTRIBUIDO CON RABBITMQ (DÍA 6-7)
+================================================================================
+* Objetivo: Implementar transaccionalidad bancaria y comunicación asíncrona entre módulos.
+* Pasos a seguir:
+  1. Definir la entidad `Transfer.java` en `banksphere-core` con campos de origen,
+     destino, importe, tipo de transferencia (SEPA, SWIFT, Inmediata) y comisiones.
+  2. Implementar `TransferService`:
+     - Debe ser `@Transactional` para evitar inconsistencias de saldo.
+     - Validar que la cuenta de origen tenga saldo suficiente.
+     - Aplicar lógica de comisiones automáticas según el tipo de transferencia
+       (Ej: SWIFT tiene un 1.5% de comisión, Inmediata tiene comisión fija).
+  3. Configurar `RabbitMQConfig` en el Core:
+     - Definir el Exchange de tipo Topic (`banksphere.exchange`).
+     - Definir la cola de transferencias (`transfer.queue`).
+  4. Modificar el flujo de realización de transferencias para que al confirmarse,
+     se envíe un mensaje en formato JSON a la cola de RabbitMQ.
+  5. Crear la vista `transfers/new.html` con un flujo guiado paso a paso (Wizard)
+     donde se muestre el desglose interactivo de comisiones en tiempo real con JS.
+
+================================================================================
+FASE 5: MÓDULO AML / KYC Y SISTEMA ANTIFRAUDE INTELIGENTE (DÍA 8-9)
+================================================================================
+* Objetivo: Procesar transacciones distribuidas en segundo plano y evaluar riesgos financieros.
+* Pasos a seguir:
+  1. Configurar y levantar el sub-módulo `banksphere-antifraud`.
+  2. Escribir un `TransactionConsumer` en este módulo que escuche la cola
+     `transfer.queue` que genera el módulo Core.
+  3. Crear el motor de reglas de riesgo `RiskRulesEngine.java`:
+     - Regla 1: Transferencias superiores a 10.000€ (Alerta AML automática).
+     - Regla 2: Más de 3 operaciones en menos de 1 minuto (Operaciones consecutivas - Fraude).
+     - Regla 3: Transferencias internacionales a países no pertenecientes a la SEPA (SWIFT).
+  4. Guardar las alertas resultantes y marcarlas con niveles de criticidad (Bajo, Medio, Alto).
+  5. Crear la API REST en `AntiFraudRestController` para que el módulo Core pueda
+     consultar el riesgo histórico de un cliente o ver alertas activas.
+  6. Diseñar la pantalla de Analytics Financiero (`dashboard/index.html` y
+     `users/list.html` con vista para ANALYST) que consuma estos datos y los presente
+     en gráficos radiales de riesgo en tiempo real.
+
+================================================================================
+FASE 6: FRONTEND DINÁMICO, DASHBOARD PREMIUM Y ESTADÍSTICAS (DÍA 10-11)
+================================================================================
+* Objetivo: Lograr una experiencia visual impactante tipo Fintech (Revolut, N26, Stripe).
+* Pasos a seguir:
+  1. Configurar la paleta de colores CSS mediante Variables CSS en `variables.css`.
+     - Utilizar colores HSL modernos, sombras suaves (`box-shadow`), gradientes
+       degradados y fuentes modernas (ej: "Inter" o "Outfit").
+  2. Crear la barra lateral interactiva (`sidebar.html`) que se contraiga en
+     móviles y sea totalmente responsiva.
+  3. Integrar Chart.js en `chart-renderer.js` para renderizar en el Dashboard:
+     - Gráfico de Línea: Evolución histórica del saldo del cliente.
+     - Gráfico de Torta (Doughnut): Distribución de gastos por categorías (Concepto).
+     - Gráfico de Barras: Comparativa mensual de ingresos vs egresos.
+  4. Desarrollar el modo oscuro opcional almacenando la preferencia del usuario
+     en el localStorage para mantener la persistencia en las recargas de página.
+
+================================================================================
+FASE 7: COMUNICACIÓN EN TIEMPO REAL CON WEBSOCKETS (DÍA 12)
+================================================================================
+* Objetivo: Avisar instantáneamente al usuario de operaciones y disponer de soporte.
+* Pasos a seguir:
+  1. Levantar el sub-módulo `banksphere-notifications`.
+  2. En el archivo `WebSocketConfig.java`, configurar un broker de mensajería Stomp
+     con punto de conexión en `/ws`.
+  3. Crear un consumidor en `NotificationEventConsumer` que escuche la cola de
+     alertas de RabbitMQ. Al recibir una alerta de fraude o confirmación de
+     transferencia, debe reenviar el mensaje a través de WebSockets a la ruta del cliente.
+  4. En el frontend de Thymeleaf, importar `sockjs.js` y `stomp.js`, y programar en
+     `websockets-client.js` para recibir estas alertas y mostrarlas en Toast Notifications.
+  5. Adicionalmente, implementar un Chat de soporte técnico en tiempo real en la
+     esquina inferior derecha de la aplicación para comunicarse con un ANALYST/ADMIN.
+
+================================================================================
+FASE 8: NOTIFICACIONES DE SEGURIDAD POR EMAIL (DÍA 13)
+================================================================================
+* Objetivo: Notificar de forma externa al usuario eventos críticos del sistema.
+* Pasos a seguir:
+  1. En `banksphere-notifications`, configurar `Spring Mail` en `application.yml`
+     apuntando al host y puerto local de Mailpit (servidor de correo para test).
+  2. Implementar `MailSenderService.java` capaz de enviar correos con plantillas HTML.
+  3. Crear disparadores de email asíncronos para:
+     - Correo de Bienvenida: Al completar satisfactoriamente el registro e inicio de KYC.
+     - Alerta de Transferencia: Email detallando los datos de la transferencia emitida.
+     - Alerta de Seguridad Crítica: Si el motor de fraude detecta una transferencia
+       bloqueada o sospechosa.
+  4. Probar el envío abriendo el navegador en `http://localhost:8025` (Panel de Mailpit)
+     para ver la bandeja de entrada ficticia con los emails renderizados.
+
+================================================================================
+FASE 9: OPEN BANKING API Y DOCUMENTACIÓN CON SWAGGER (DÍA 14)
+================================================================================
+* Objetivo: Exponer endpoints seguros e integrables para terceros.
+* Pasos a seguir:
+  1. Agregar la dependencia `springdoc-openapi-starter-webmvc-ui` en `banksphere-core`.
+  2. Desarrollar controladores dedicados exclusivamente a la API REST bajo
+     el prefijo `/api/v1/openbanking/` (Cuentas, Transferencias, Balance).
+  3. Implementar DTOs para evitar exponer las entidades JPA directamente de
+     cara a las aplicaciones clientes.
+  4. Configurar filtros y reglas específicas de validación (`@Valid`, `@NotNull`)
+     y retornar códigos HTTP semánticos (200 OK, 201 Created, 400 Bad Request, etc.).
+  5. Asegurar los endpoints de Open Banking (ej. requiriendo Basic Auth o JWT).
+  6. Acceder a `http://localhost:8080/swagger-ui.html` para validar la documentación
+     interactiva y realizar pruebas de endpoints.
+
+================================================================================
+FASE 10: AUTOMATIZACIÓN, TESTING Y DESPLIEGUE CONTINUO (DÍA 15)
+================================================================================
+* Objetivo: Asegurar el correcto funcionamiento y empaquetar el producto final.
+* Pasos a seguir:
+  1. Escribir pruebas unitarias exhaustivas con JUnit 5 y Mockito para las
+     clases críticas de lógica transaccional (`TransferServiceTest` y `RiskRulesEngineTest`).
+  2. Escribir pruebas de integración con `@SpringBootTest` levantando base de
+     datos PostgreSQL y RabbitMQ de prueba empleando contenedores (o base de datos H2).
+  3. En la raíz del proyecto, diseñar un `Dockerfile` multi-stage que compile
+     el proyecto completo con Maven y genere las imágenes Docker ligeras para producción.
+  4. Configurar la automatización del flujo de integración continua en
+     `.github/workflows/ci-cd.yml`:
+     - Compilación del proyecto en cada Push/Pull Request.
+     - Ejecución automática de todas las pruebas unitarias y de integración.
+     - Envío opcional de métricas de calidad a SonarQube.
+  5. Ejecutar `docker compose down` y luego reconstruir todo con imágenes compiladas
+     locales para asegurar que todo el ecosistema distribuido opera de forma autónoma.
+================================================================================

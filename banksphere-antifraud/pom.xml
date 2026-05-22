@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Herencia del proyecto padre coordinado -->
+    <parent>
+        <groupId>com.banksphere</groupId>
+        <artifactId>banksphere-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>banksphere-antifraud</artifactId>
+    <packaging>jar</packaging>
+
+    <name>banksphere-antifraud</name>
+    <description>Módulo de Control Antifraude, Motor de Reglas de Riesgo y AML</description>
+
+    <dependencies>
+        <!-- 1. Enlace/Dependencia Directa con el módulo común (DTOs y Excepciones compartidas) -->
+        <dependency>
+            <groupId>com.banksphere</groupId>
+            <artifactId>banksphere-common</artifactId>
+        </dependency>
+
+        <!-- 2. Spring Boot Web Starter para exponer la REST API de analistas y consolas de riesgo -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- 3. Spring Boot AMQP (RabbitMQ Client) para consumir eventos de transferencias en tiempo real -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
+        <!-- 4. MapStruct para mapear estructuras de datos internas a los DTOs de reporte de fraude -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Plugin de empaquetado de Spring Boot para generar el JAR ejecutable del microservicio -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # 1. Base de Datos Relacional Principal (PostgreSQL)
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: banksphere-db
+    restart: always
+    environment:
+      POSTGRES_DB: banksphere_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secretpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      # Persistencia de datos en volumen de docker
+      - postgres_data:/var/lib/postgresql/data
+      # Script inicial opcional para inyectar esquema o datos de prueba automáticamente
+      - ./databases/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - banksphere-network
+
+  # 2. Panel de Control y Administración Web de la Base de Datos (pgAdmin)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: banksphere-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@banksphere.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres-db
+    networks:
+      - banksphere-network
+
+  # 3. Message Broker (RabbitMQ) - Core de la comunicación distribuida asíncrona
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: banksphere-mq
+    restart: always
+    ports:
+      - "5672:5672"      # Puerto de transmisión de datos AMQP (usado por Java)
+      - "15672:15672"    # Puerto de la Consola de Administración Web
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - banksphere-network
+
+  # 4. Servidor SMTP Sandbox (Mailpit) - Captura de correos electrónicos interactiva
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: banksphere-mailpit
+    restart: always
+    ports:
+      - "1025:1025"      # Puerto SMTP para enviar correos desde Spring Boot
+      - "8025:8025"      # Interfaz Web de bandeja de entrada para verificar emails
+    networks:
+      - banksphere-network
+
+# Red virtual aislada para la comunicación interna entre contenedores
+networks:
+  banksphere-network:
+    driver: bridge
+
+# Volúmenes con nombre para garantizar que los datos no se borren al apagar los servicios
+volumes:
+  postgres_data:
