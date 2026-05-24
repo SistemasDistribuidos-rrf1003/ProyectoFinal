@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${isEdit} ? 'Editar Usuario - BankSphere' : 'Nuevo Usuario - BankSphere'">Mantenimiento de Usuario</title>
+
+    <!-- Google Fonts & Bootstrap 5 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Reutilización del Sistema de Diseño (Estilo Oscuro Glassmorphic) -->
+    <style>
+        :root {
+            --bg-color: #08090d;
+            --sidebar-bg: #11141d;
+            --card-bg: rgba(20, 24, 39, 0.6);
+            --border-color: rgba(255, 255, 255, 0.06);
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+            --primary-grad: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            --accent-grad: linear-gradient(135deg, #b15cff 0%, #5c53ff 100%);
+            --input-bg: rgba(17, 24, 39, 0.8);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+        }
+
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-logo {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.8rem;
+            background: var(--primary-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 40px;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 14px 18px;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-bottom: 8px;
+        }
+
+        .nav-item.active a, .nav-item a:hover {
+            background: rgba(79, 172, 254, 0.08);
+            color: #00f2fe;
+        }
+
+        .nav-item.active a {
+            border-left: 3px solid #00f2fe;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 40px;
+            background: radial-gradient(circle at 10% 20%, rgba(177, 92, 255, 0.03) 0%, rgba(0, 0, 0, 0) 50%);
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.3);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .form-label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group-custom {
+            position: relative;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group-custom:focus-within {
+            border-color: #00f2fe;
+            box-shadow: 0 0 0 4px rgba(0, 242, 254, 0.15);
+        }
+
+        .input-group-custom i {
+            padding: 14px;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .form-control-custom, .form-select-custom {
+            background: transparent !important;
+            border: none !important;
+            color: var(--text-color) !important;
+            padding: 12px 14px 12px 0px;
+            font-size: 0.9rem;
+            width: 100%;
+            outline: none;
+        }
+
+        .form-select-custom {
+            padding-right: 30px;
+            cursor: pointer;
+        }
+
+        .form-select-custom option {
+            background-color: #1a1e2e;
+            color: var(--text-color);
+        }
+
+        /* Botones del Formulario */
+        .btn-submit {
+            background: var(--primary-grad);
+            border: none;
+            color: #08090d;
+            font-weight: 600;
+            padding: 14px 30px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.35);
+            filter: brightness(1.1);
+        }
+
+        .btn-cancel {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-weight: 500;
+            padding: 14px 30px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+        }
+
+        .error-feedback {
+            color: #f87171;
+            font-size: 0.8rem;
+            margin-top: 4px;
+            padding-left: 10px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="brand-logo">
+            <i class="bi bi-globe2"></i> BankSphere
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="/dashboard"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+            </li>
+            <li class="nav-item active">
+                <a href="/users"><i class="bi bi-people-fill"></i> Clientes (CRUD)</a>
+            </li>
+            <li class="nav-item">
+                <a href="/accounts"><i class="bi bi-credit-card-2-front-fill"></i> Cuentas</a>
+            </li>
+            <li class="nav-item">
+                <a href="/transfers"><i class="bi bi-arrow-left-right"></i> Transferencias</a>
+            </li>
+            <li class="nav-item">
+                <a href="/analyst/dashboard"><i class="bi bi-shield-fill-exclamation"></i> Motor AML/KYC</a>
+            </li>
+        </ul>
+        <div class="mt-auto">
+            <a href="/logout" class="btn btn-outline-danger w-100 border-0 rounded-3 text-start py-2">
+                <i class="bi bi-box-arrow-left me-2"></i> Cerrar Sesión
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+        <!-- Breadcrumbs / Header -->
+        <div class="mb-4 d-flex align-items-center gap-2 text-muted small">
+            <a href="/users" class="text-decoration-none text-muted hover-white">Clientes</a>
+            <i class="bi bi-chevron-right"></i>
+            <span class="text-white" th:text="${isEdit} ? 'Editar Perfil' : 'Nuevo Cliente'">Nuevo</span>
+        </div>
+
+        <div class="glass-card">
+            <!-- Título e Icono Dinámicos -->
+            <div class="mb-4">
+                <h2 class="font-family-outfit fw-bold mb-1" th:text="${isEdit} ? 'Editar Usuario' : 'Registrar Nuevo Usuario'">Nuevo Usuario</h2>
+                <p class="text-muted small" th:text="${isEdit} ? 'Modifica los privilegios o datos del cliente. Los cambios impactarán sus cuentas asociadas.' : 'Crea una nueva identidad bancaria con encriptación BCrypt e KYC inicial.'">Detalles del formulario</p>
+            </div>
+
+            <!-- Mensaje de Error Global -->
+            <div th:if="${errorMessage}" class="alert alert-danger border-0 rounded-3 p-3 mb-4" role="alert" style="background: rgba(239, 68, 68, 0.15); color: #f87171;">
+                <i class="bi bi-exclamation-octagon-fill me-2"></i>
+                <span th:text="${errorMessage}"></span>
+            </div>
+
+            <!-- Formulario Thymeleaf Enlazado al Objeto User -->
+            <form th:action="${isEdit} ? @{/users/edit/{id}(id=${user.id})} : @{/users/new}" th:object="${user}" method="POST">
+
+                <!-- Fila 1: Nombre y Apellidos -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="firstName" class="form-label">Nombre</label>
+                        <div class="input-group-custom">
+                            <i class="bi bi-person"></i>
+                            <input type="text" id="firstName" th:field="*{firstName}" class="form-control-custom" placeholder="Javier" required>
+                        </div>
+                        <span class="error-feedback" th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}">Error de nombre</span>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="lastName" class="form-label">Apellidos</label>
+                        <div class="input-group-custom">
+                            <i class="bi bi-people"></i>
+                            <input type="text" id="lastName" th:field="*{lastName}" class="form-control-custom" placeholder="Gómez Ruiz" required>
+                        </div>
+                        <span class="error-feedback" th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}">Error de apellidos</span>
+                    </div>
+                </div>
+
+                <!-- Fila 2: Email y Teléfono -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">Email de Acceso</label>
+                        <div class="input-group-custom">
+                            <i class="bi bi-envelope"></i>
+                            <input type="email" id="email" th:field="*{email}" class="form-control-custom" placeholder="javier.gomez@gmail.com" required>
+                        </div>
+                        <span class="error-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Error de email</span>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="phone" class="form-label">Teléfono Móvil</label>
+                        <div class="input-group-custom">
+                            <i class="bi bi-telephone"></i>
+                            <input type="tel" id="phone" th:field="*{phone}" class="form-control-custom" placeholder="+34 611 223 344">
+                        </div>
+                        <span class="error-feedback" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}">Error de teléfono</span>
+                    </div>
+                </div>
+
+                <!-- Fila 3: DNI / Documento y Rol del Usuario -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="nationalId" class="form-label">Documento Identidad (DNI/NIE)</label>
+                        <!-- El documento de identidad no se permite editar una vez creado por normativas KYC/AML -->
+                        <div class="input-group-custom">
+                            <i class="bi bi-card-text"></i>
+                            <input type="text" id="nationalId" th:field="*{nationalId}" class="form-control-custom" placeholder="87654321B" required th:readonly="${isEdit}">
+                        </div>
+                        <span class="error-feedback" th:if="${#fields.hasErrors('nationalId')}" th:errors="*{nationalId}">Error de documento</span>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="role" class="form-label">Rol del Usuario (Privilegios)</label>
+                        <div class="input-group-custom">
+                            <i class="bi bi-shield-fill"></i>
+                            <select id="role" th:field="*{role}" class="form-select-custom" required>
+                                <option th:each="r : ${roles}" th:value="${r}" th:text="${r}">USER</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fila 4: Contraseña y Estado -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="password" class="form-label">Contraseña</label>
+                        <div class="input-group-custom">
+                            <i class="bi bi-lock-fill"></i>
+                            <!-- Si estamos editando, la contraseña no es obligatoria para preservarla -->
+                            <input type="password" id="password" th:field="*{password}" class="form-control-custom" placeholder="••••••••••••" th:required="${!isEdit}">
+                        </div>
+                        <small class="text-muted d-block mt-1 ps-2" th:if="${isEdit}">Dejar en blanco si no deseas modificarla.</small>
+                        <span class="error-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Error de clave</span>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="status" class="form-label">Estado de la Cuenta</label>
+                        <div class="input-group-custom">
+                            <i class="bi bi-activity"></i>
+                            <select id="status" th:field="*{status}" class="form-select-custom" required>
+                                <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}">ACTIVE</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Acciones Finales -->
+                <div class="d-flex justify-content-end gap-3 pt-3 border-top" style="border-color: var(--border-color) !important;">
+                    <a href="/users" class="btn btn-cancel">Cancelar</a>
+                    <button type="submit" class="btn-submit" th:text="${isEdit} ? 'Salvar Cambios' : 'Registrar Cliente'">Registrar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
