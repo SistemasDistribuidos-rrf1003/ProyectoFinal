@@ -1,0 +1,29 @@
+# =============================================================================
+#     BANKSphere AntiFraud Service - CONFIGURACIÓN DE PROPIEDADES (YAML)
+# =============================================================================
+
+server:
+  port: 8082  # Puerto único de escucha para analistas y alertas de riesgo
+
+spring:
+  application:
+    name: banksphere-antifraud
+
+  # 1. Configuración de Conexión al Message Broker de RabbitMQ
+  rabbitmq:
+    host: localhost   # [Pro-Tip]: Usar 'localhost' para desarrollo local o 'rabbitmq' si corres la App dentro de Docker
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        concurrency: 1         # Consumidor inicial concurrente activo
+        max-concurrency: 3     # Escalabilidad máxima bajo picos de transferencias
+        acknowledge-mode: auto # Confirmación automática de mensajes procesados
+
+# 2. Configuración de Niveles de Logs
+logging:
+  level:
+    root: INFO
+    org.springframework.amqp: INFO
+    com.banksphere.antifraud: DEBUG # Habilita logs detallados para auditar el análisis de fraude en tiempo real
