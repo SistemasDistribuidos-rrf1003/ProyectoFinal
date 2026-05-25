@@ -156,3 +156,148 @@ body {
     color: var(--warning-color);
     box-shadow: 0 0 15px rgba(251, 191, 36, 0.15);
 }
+
+/* =============================================================================
+   ESTILOS ESPECÍFICOS DEL WIZARD DE TRANSFERENCIAS (PASO A PASO)
+   ============================================================================= */
+
+/* Contenedor del Indicador de Pasos */
+.step-indicator {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin-bottom: 40px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.step-indicator::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 0; right: 0;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.06);
+    z-index: 1;
+    transform: translateY(-50%);
+}
+
+/* Burbujas del Wizard */
+.step-bubble {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #11141d;
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    z-index: 2;
+    position: relative;
+    transition: var(--transition-smooth);
+}
+
+.step-bubble.active {
+    border-color: var(--primary-neon);
+    color: var(--primary-neon);
+    box-shadow: 0 0 15px rgba(0, 242, 254, 0.25);
+    background: #08090d;
+}
+
+.step-bubble.completed {
+    background: var(--primary-grad);
+    border-color: transparent;
+    color: #08090d;
+}
+
+/* Etiquetas del Wizard debajo de las burbujas */
+.step-label {
+    position: absolute;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.step-bubble.active .step-label {
+    color: var(--primary-neon);
+    font-weight: 600;
+}
+
+/* Pasos del Formulario */
+.wizard-step {
+    display: none;
+}
+
+.wizard-step.active {
+    display: block;
+    animation: fadeInStep 0.4s ease-in-out;
+}
+
+@keyframes fadeInStep {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Desglose de Comisiones / Recibo Interactivo */
+.receipt-container {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: 24px;
+}
+
+.receipt-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.receipt-total {
+    border-top: 1px solid var(--border-color);
+    padding-top: 15px;
+    margin-top: 15px;
+    font-size: 1.1rem;
+    color: white;
+    font-weight: 700;
+}
+
+/* Botones de Navegación del Wizard */
+.btn-wizard {
+    min-width: 140px;
+    padding: 12px 24px;
+    border-radius: var(--border-radius-sm);
+    font-weight: 600;
+    transition: var(--transition-smooth);
+}
+
+.btn-next {
+    background: var(--primary-grad);
+    border: none;
+    color: var(--text-dark);
+}
+
+.btn-next:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+}
+
+.btn-back {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.08);
+}

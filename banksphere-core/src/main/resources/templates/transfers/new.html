@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Transferencia - BankSphere</title>
+
+    <!-- Google Fonts & Bootstrap 5 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- CSS del Sistema de Diseño Premium -->
+    <link rel="stylesheet" th:href="@{/css/variables.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+
+</head>
+<body>
+
+<div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="brand-logo">
+            <i class="bi bi-globe2"></i> BankSphere
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="/dashboard"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+            </li>
+            <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                <a href="/users"><i class="bi bi-people-fill"></i> Clientes (CRUD)</a>
+            </li>
+            <li class="nav-item">
+                <a href="/accounts"><i class="bi bi-credit-card-2-front-fill"></i> Cuentas</a>
+            </li>
+            <li class="nav-item active">
+                <a href="/transfers"><i class="bi bi-arrow-left-right"></i> Transferencias</a>
+            </li>
+            <li class="nav-item">
+                <a href="/analyst/dashboard"><i class="bi bi-shield-fill-exclamation"></i> Motor AML/KYC</a>
+            </li>
+        </ul>
+        <div class="mt-auto">
+            <a href="/logout" class="btn btn-outline-danger w-100 border-0 rounded-3 text-start py-2">
+                <i class="bi bi-box-arrow-left me-2"></i> Cerrar Sesión
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+
+        <div class="mb-4 d-flex align-items-center gap-2 text-muted small">
+            <a href="/accounts" class="text-decoration-none text-muted hover-white">Transferencias</a>
+            <i class="bi bi-chevron-right"></i>
+            <span class="text-white">Nueva Operación</span>
+        </div>
+
+        <!-- Contenedor del Formulario -->
+        <div class="glass-card">
+
+            <div class="mb-5 text-center">
+                <h2 class="font-family-outfit fw-bold mb-1">Nueva Transferencia</h2>
+                <p class="text-muted small">Transfiere fondos de forma segura utilizando la red interbancaria de BankSphere</p>
+            </div>
+
+            <!-- Burbujas del Indicador de Pasos (Wizard Steps) -->
+            <div class="step-indicator">
+                <div class="step-bubble active" id="bubble-1">1
+                    <span class="step-label">Cuenta Origen</span>
+                </div>
+                <div class="step-bubble" id="bubble-2">2
+                    <span class="step-label">Monto y Beneficiario</span>
+                </div>
+                <div class="step-bubble" id="bubble-3">3
+                    <span class="step-label">Confirmación</span>
+                </div>
+            </div>
+
+            <!-- Formulario de Transferencias -->
+            <form th:action="@{/transfers/new}" method="POST" id="transfer-form">
+
+                <!-- =========================================================
+                     PASO 1: CUENTA DE ORIGEN
+                     ========================================================= -->
+                <div class="wizard-step active" id="step-1">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-wallet2 text-info me-2"></i>Selecciona la cuenta de origen</h5>
+                    <p class="text-muted small mb-4">Elige una de tus cuentas bancarias para realizar el débito. Asegúrate de verificar el saldo disponible.</p>
+
+                    <div class="mb-4">
+                        <label for="sourceAccount" class="form-label">Cuenta Emisora</label>
+                        <div class="input-group-custom">
+                            <i class="bi bi-credit-card-fill"></i>
+                            <select id="sourceAccount" name="sourceIban" class="form-select-custom" required>
+                                <option value="" disabled selected>Selecciona una cuenta emisora...</option>
+                                <!-- Inyección dinámica de cuentas asociadas -->
+                                <option th:each="acc : ${accounts}"
+                                        th:value="${acc.iban}"
+                                        th:data-balance="${acc.balance}"
+                                        th:data-currency="${acc.currency.name()}"
+                                        th:selected="${acc.iban == paramSource}"
+                                        th:text="${acc.iban + ' (Saldo: ' + #numbers.formatDecimal(acc.balance, 1, 'POINT', 2, 'COMMA') + ' ' + acc.currency.name() + ')'}">
+                                    ES21... (Saldo: 45.000,00 EUR)
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="button" class="btn btn-wizard btn-next" onclick="goToStep(2)">Siguiente <i class="bi bi-chevron-right ms-1"></i></button>
+                    </div>
+                </div>
+
+                <!-- =========================================================
+                     PASO 2: BENEFICIARIO E IMPORTE
+                     ========================================================= -->
+                <div class="wizard-step" id="step-2">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-arrow-up-right-circle text-info me-2"></i>Datos del Beneficiario</h5>
+                    <p class="text-muted small mb-4">Introduce el IBAN de la cuenta de destino y el tipo de transferencia que deseas realizar.</p>
+
+                    <div class="row g-3">
+                        <!-- IBAN de Destino -->
+                        <div class="col-md-12 mb-3">
+                            <label for="destinationIban" class="form-label">IBAN del Beneficiario</label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-bank"></i>
+                                <input type="text" id="destinationIban" name="destinationIban" class="form-control-custom" placeholder="ESXX 0000 0000 0000 0000 0000" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <!-- Importe -->
+                        <div class="col-md-6 mb-3">
+                            <label for="amount" class="form-label">Importe a Enviar</label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-currency-exchange"></i>
+                                <!-- Validación en tiempo real -->
+                                <input type="number" id="amount" name="amount" class="form-control-custom" placeholder="0.00" min="0.01" step="0.01" required>
+                            </div>
+                        </div>
+
+                        <!-- Tipo de Transferencia -->
+                        <div class="col-md-6 mb-3">
+                            <label for="transferType" class="form-label">Tipo de Transferencia</label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-lightning-charge-fill"></i>
+                                <select id="transferType" name="transferType" class="form-select-custom" required>
+                                    <option value="SEPA" selected>Estándar SEPA (Gratuito - 1 día laborable)</option>
+                                    <option value="INSTANT">Pago Inmediato (Tarifa plana: 2.50 €)</option>
+                                    <option value="SWIFT">Internacional SWIFT (Comisión: 1.5% del importe)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-wizard btn-back" onclick="goToStep(1)"><i class="bi bi-chevron-left me-1"></i> Atrás</button>
+                        <button type="button" class="btn btn-wizard btn-next" onclick="goToStep(3)">Siguiente <i class="bi bi-chevron-right ms-1"></i></button>
+                    </div>
+                </div>
+
+                <!-- =========================================================
+                     PASO 3: CONFIRMACIÓN Y DESGLOSE INTERACTIVO
+                     ========================================================= -->
+                <div class="wizard-step" id="step-3">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-shield-lock-fill text-info me-2"></i>Confirmación de la Operación</h5>
+                    <p class="text-muted small mb-4">Verifica el desglose de costes y comisiones. Una vez confirmado, se enviará la solicitud al broker de mensajería para su validación.</p>
+
+                    <!-- Concepto del pago -->
+                    <div class="mb-4">
+                        <label for="concept" class="form-label">Concepto de Transferencia</label>
+                        <div class="input-group-custom">
+                            <i class="bi bi-chat-left-text-fill"></i>
+                            <input type="text" id="concept" name="concept" class="form-control-custom" placeholder="Ej: Pago de alquiler mayo">
+                        </div>
+                    </div>
+
+                    <!-- Recibo interactivo con Motor de JS en tiempo real -->
+                    <div class="receipt-container mb-4">
+                        <div class="receipt-row">
+                            <span>Importe Neto a Enviar:</span>
+                            <strong id="receipt-amount" class="text-white">0,00 €</strong>
+                        </div>
+                        <div class="receipt-row">
+                            <span>Comisión de Canal (<span id="receipt-type-label">SEPA</span>):</span>
+                            <strong id="receipt-fee" class="text-warning">0,00 €</strong>
+                        </div>
+                        <div class="receipt-total">
+                            <span>Coste Total a Debitar:</span>
+                            <strong id="receipt-total" class="text-info">0,00 €</strong>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-wizard btn-back" onclick="goToStep(2)"><i class="bi bi-chevron-left me-1"></i> Atrás</button>
+                        <button type="submit" class="btn btn-wizard btn-next" style="background: var(--accent-grad); box-shadow: 0 4px 15px rgba(177, 92, 255, 0.3);">
+                            Confirmar y Pagar <i class="bi bi-check-circle-fill ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </main>
+</div>
+
+<!-- Bootstrap JS & Script del Wizard y Calculadora de Comisiones -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // 1. Control del Flujo del Asistente (Wizard Navigation)
+    function goToStep(step) {
+        // Validaciones básicas de campos obligatorios antes de pasar de paso
+        if (step === 2) {
+            const sourceAcc = document.getElementById('sourceAccount').value;
+            if (!sourceAcc) {
+                alert("Por favor, selecciona una cuenta de origen antes de continuar.");
+                return;
+            }
+        }
+        if (step === 3) {
+            const destIban = document.getElementById('destinationIban').value;
+            const amt = document.getElementById('amount').value;
+            if (!destIban || !amt || amt <= 0) {
+                alert("Por favor, introduce un IBAN beneficiario válido y un importe superior a cero.");
+                return;
+            }
+
+            // Actualiza y recalcula el recibo en el paso de confirmación final
+            recalculateFees();
+        }
+
+        // Oculta todos los pasos y desactiva las burbujas
+        document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.step-bubble').forEach(el => el.classList.remove('active', 'completed'));
+
+        // Activa el paso actual
+        document.getElementById(`step-${step}`).classList.add('active');
+
+        // Actualiza el estilo de las burbujas de progreso
+        for(let i = 1; i <= 3; i++) {
+            const bubble = document.getElementById(`bubble-${i}`);
+            if (i < step) {
+                bubble.classList.add('completed');
+            } else if (i === step) {
+                bubble.classList.add('active');
+            }
+        }
+    }
+
+    // 2. Motor de Cálculo de Comisiones Bancarias en Tiempo Real (JS)
+    function recalculateFees() {
+        const amountInput = document.getElementById('amount');
+        const typeSelect = document.getElementById('transferType');
+        const sourceSelect = document.getElementById('sourceAccount');
+
+        const amount = parseFloat(amountInput.value) || 0;
+        const type = typeSelect.value;
+
+        // Obtener datos de la moneda de la cuenta emisora seleccionada
+        const selectedOption = sourceSelect.options[sourceSelect.selectedIndex];
+        const currency = selectedOption.getAttribute('data-currency') || 'EUR';
+        const symbol = currency === 'EUR' ? ' €' : ' $';
+
+        let fee = 0;
+
+        // Lógica de cálculo en cliente que coincide con la de TransferService
+        if (type === 'INSTANT') {
+            fee = 2.50; // Comisión fija de transferencia inmediata
+        } else if (type === 'SWIFT') {
+            fee = amount * 0.015; // 1.5% de comisión internacional
+        } else {
+            fee = 0.00; // SEPA gratuita
+        }
+
+        const total = amount + fee;
+
+        // Inyectamos el desglose formateado en el recibo HTML
+        document.getElementById('receipt-amount').innerText = amount.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + symbol;
+        document.getElementById('receipt-fee').innerText = fee.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + symbol;
+        document.getElementById('receipt-type-label').innerText = type;
+        document.getElementById('receipt-total').innerText = total.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + symbol;
+    }
+
+    // Escucha cambios en inputs para actualizar cálculos al instante
+    document.getElementById('amount').addEventListener('input', recalculateFees);
+    document.getElementById('transferType').addEventListener('change', recalculateFees);
+    document.getElementById('sourceAccount').addEventListener('change', recalculateFees);
+</script>
+</body>
+</html>
