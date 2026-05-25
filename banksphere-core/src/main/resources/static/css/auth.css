@@ -1,0 +1,111 @@
+/* =============================================================================
+   BANKSphere - ESTILOS DE AUTENTICACIÓN (LOGIN & REGISTRO)
+   ============================================================================= */
+
+@import url('variables.css');
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow-x: hidden;
+    padding: 40px 0;
+}
+
+/* Glows flotantes */
+.glow-bg {
+    position: absolute;
+    width: 450px;
+    height: 450px;
+    border-radius: 50%;
+    z-index: 0;
+    filter: blur(50px);
+    pointer-events: none;
+}
+.glow-left {
+    top: -10%; left: -10%;
+    background: radial-gradient(circle, rgba(0, 242, 254, 0.15) 0%, rgba(0,0,0,0) 70%);
+}
+.glow-right {
+    bottom: -10%; right: -10%;
+    background: radial-gradient(circle, rgba(177, 92, 255, 0.12) 0%, rgba(0,0,0,0) 70%);
+}
+
+/* Tarjeta del Formulario */
+.auth-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--card-shadow);
+    z-index: 10;
+    transition: var(--transition-smooth);
+}
+
+.brand-title {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    background: var(--primary-grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -1px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Estilización de Inputs con Iconografía */
+.input-group-custom {
+    position: relative;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-smooth);
+    display: flex;
+    align-items: center;
+}
+
+.input-group-custom:focus-within {
+    border-color: var(--primary-neon);
+    box-shadow: 0 0 0 4px rgba(0, 242, 254, 0.15);
+}
+
+.input-group-custom i {
+    padding: 15px;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+.form-control-custom {
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-color) !important;
+    padding: 14px 15px 14px 0px;
+    font-size: 0.95rem;
+    width: 100%;
+    outline: none;
+}
+
+/* Botones de acción */
+.btn-submit-primary {
+    background: var(--primary-grad);
+    border: none;
+    color: var(--text-dark);
+    font-weight: 600;
+    padding: 14px;
+    border-radius: var(--border-radius-sm);
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+    transition: var(--transition-smooth);
+}
+
+.btn-submit-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4);
+    filter: brightness(1.1);
+}

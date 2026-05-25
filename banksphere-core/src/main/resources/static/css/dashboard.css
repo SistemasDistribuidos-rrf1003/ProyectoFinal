@@ -1,0 +1,158 @@
+/* =============================================================================
+   BANKSphere - ESTILOS DE CONSOLA BANCARIA Y DASHBOARD (CRUD / CUENTAS)
+   ============================================================================= */
+
+@import url('variables.css');
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+}
+
+/* Maquetación del Dashboard */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar Retro-Futurista */
+.sidebar {
+    width: 280px;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-logo {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 1.8rem;
+    background: var(--primary-grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 40px;
+}
+
+.nav-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+}
+
+.nav-item a {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 14px 18px;
+    color: var(--text-muted);
+    text-decoration: none;
+    border-radius: var(--border-radius-sm);
+    font-weight: 500;
+    transition: var(--transition-smooth);
+    margin-bottom: 8px;
+}
+
+.nav-item.active a, .nav-item a:hover {
+    background: rgba(79, 172, 254, 0.08);
+    color: var(--primary-neon);
+}
+
+.nav-item.active a {
+    border-left: 3px solid var(--primary-neon);
+    border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+}
+
+/* Área de contenido */
+.main-content {
+    flex-grow: 1;
+    padding: 40px;
+    background: radial-gradient(circle at 50% 10%, rgba(92, 83, 255, 0.04) 0%, rgba(0, 0, 0, 0) 60%);
+}
+
+/* Fichas / Tarjetas de Cristal */
+.glass-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: 30px;
+    box-shadow: var(--card-shadow);
+}
+
+/* Tablas Premium */
+.table-custom {
+    color: var(--text-color) !important;
+    vertical-align: middle;
+}
+
+.table-custom th {
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 16px 12px;
+    background: transparent !important;
+}
+
+.table-custom td {
+    border-bottom: 1px solid var(--border-color);
+    padding: 16px 12px;
+    background: transparent !important;
+}
+
+/* Personalización de Scrollbar para navegadores Webkit */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--sidebar-bg);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #1f2937;
+}
+
+/* Badges Semánticos */
+.badge-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-active {
+    background: rgba(52, 211, 153, 0.1);
+    color: var(--income-color);
+    box-shadow: 0 0 15px rgba(52, 211, 153, 0.15);
+}
+
+.status-suspended {
+    background: rgba(248, 113, 113, 0.1);
+    color: var(--expense-color);
+    box-shadow: 0 0 15px rgba(248, 113, 113, 0.15);
+}
+
+.status-pending {
+    background: rgba(251, 191, 36, 0.1);
+    color: var(--warning-color);
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.15);
+}

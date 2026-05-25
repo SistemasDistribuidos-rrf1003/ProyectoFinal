@@ -1,0 +1,47 @@
+/* =============================================================================
+   BANKSphere - SISTEMA DE VARIABLES DE DISEÑO GLOBAL (Design Tokens)
+   ============================================================================= */
+
+:root {
+    /* 1. Paleta de Colores Base (Temática Oscura Fintech) */
+    --bg-color: #08090d;
+    --sidebar-bg: #11141d;
+    --card-bg: rgba(20, 24, 39, 0.45);
+    --input-bg: rgba(17, 24, 39, 0.8);
+
+    /* 2. Colores del Texto */
+    --text-color: #f3f4f6;
+    --text-muted: #9ca3af;
+    --text-dark: #08090d;
+
+    /* 3. Colores de Identidad y Gradients */
+    --primary-neon: #00f2fe;
+    --primary-blue: #4facfe;
+    --primary-grad: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+
+    --accent-purple: #b15cff;
+    --accent-indigo: #5c53ff;
+    --accent-grad: linear-gradient(135deg, #b15cff 0%, #5c53ff 100%);
+
+    /* 4. Estados Financieros y Semánticos */
+    --income-color: #34d399;   /* Verde Esmeralda */
+    --expense-color: #f87171;  /* Rojo Coral */
+    --warning-color: #fbbf24;  /* Oro */
+
+    /* 5. Bordes y Sombras Glassmorphism */
+    --border-color: rgba(255, 255, 255, 0.06);
+    --border-focus: rgba(0, 242, 254, 0.4);
+    --card-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    --glow-shadow: 0 0 20px rgba(0, 242, 254, 0.15);
+
+    /* 6. Fuentes y Parámetros Estéticos */
+    --font-sans: 'Inter', sans-serif;
+    --font-heading: 'Outfit', sans-serif;
+    --font-mono: 'Share Tech Mono', monospace;
+    --border-radius-lg: 24px;
+    --border-radius-md: 16px;
+    --border-radius-sm: 12px;
+
+    /* 7. Curva de Transición Estándar */
+    --transition-smooth: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
