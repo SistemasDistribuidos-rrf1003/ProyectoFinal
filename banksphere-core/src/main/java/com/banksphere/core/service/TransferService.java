@@ -1,31 +1,55 @@
 package com.banksphere.core.service;
 
+import com.banksphere.core.config.RabbitMQConfig;
 import com.banksphere.core.entity.Account;
 import com.banksphere.core.entity.Transfer;
 import com.banksphere.core.repository.TransferRepository;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Servicio de negocio altamente crítico que gestiona la transaccionalidad
- * y lógica de compensación de transferencias interbancarias en BankSphere.
+ * Servicio de negocio transaccional para la gestión de transferencias.
+ * Integra transaccionalidad bancaria y publicación de eventos distribuidos en RabbitMQ.
  */
 @Service
 public class TransferService {
 
     private final TransferRepository transferRepository;
     private final AccountService accountService;
+    private final RabbitTemplate rabbitTemplate; // Inyección de la plantilla AMQP
 
     @Autowired
-    public TransferService(TransferRepository transferRepository, AccountService accountService) {
+    public TransferService(TransferRepository transferRepository,
+                           AccountService accountService,
+                           RabbitTemplate rabbitTemplate) {
         this.transferRepository = transferRepository;
         this.accountService = accountService;
+        this.rabbitTemplate = rabbitTemplate;
     }
+
+    /**
+     * DTO Plano (Payload) que viaja a través de la cola de RabbitMQ.
+     * Evita problemas de serialización proxy de Hibernate y dependencias circulares.
+     */
+    public record TransferEvent(
+            Long id,
+            String sourceIban,
+            String sourceUserEmail,
+            String destinationIban,
+            String destinationUserEmail,
+            BigDecimal amount,
+            BigDecimal fee,
+            String concept,
+            String transferType,
+            String createdAt
+    ) {}
 
     /**
      * Recupera el historial completo de movimientos asociados a una cuenta.
@@ -36,19 +60,12 @@ public class TransferService {
     }
 
     /**
-     * Procesa y ejecuta una transferencia monetaria de forma estrictamente transaccional.
-     *
-     * @param sourceIban      IBAN de la cuenta emisora.
-     * @param destinationIban IBAN de la cuenta beneficiaria.
-     * @param amount          Importe neto a enviar.
-     * @param type            Canal de pago (SEPA, SWIFT, INSTANT).
-     * @param concept         Concepto o descripción del pago.
-     * @return La entidad {@link Transfer} persistida con estado COMPLETED.
+     * Procesa, ejecuta una transferencia bancaria de forma atómica y publica el evento en RabbitMQ.
      */
     @Transactional
     public Transfer executeTransfer(String sourceIban, String destinationIban, BigDecimal amount, Transfer.TransferType type, String concept) {
 
-        // 1. Validaciones de entrada
+        // 1. Validaciones básicas de entrada
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("El importe de la transferencia debe ser mayor a cero.");
         }
@@ -61,13 +78,13 @@ public class TransferService {
         Account source = accountService.getAccountByIban(sourceIban);
         Account destination = accountService.getAccountByIban(destinationIban);
 
-        // 3. Validación de estados de cuentas bancarias
+        // 3. Validación de estados activos (KYC / AML básico)
         if (source.getStatus() != Account.AccountStatus.ACTIVE) {
-            throw new IllegalStateException("La transferencia ha sido rechazada: La cuenta de origen está SUSPENDIDA.");
+            throw new IllegalStateException("Transferencia rechazada: La cuenta de origen está SUSPENDIDA.");
         }
 
         if (destination.getStatus() != Account.AccountStatus.ACTIVE) {
-            throw new IllegalStateException("La transferencia ha sido rechazada: La cuenta de destino está bloqueada o SUSPENDIDA.");
+            throw new IllegalStateException("Transferencia rechazada: La cuenta de destino está SUSPENDIDA.");
         }
 
         // 4. Cálculo automático de comisiones bancarias
@@ -78,7 +95,7 @@ public class TransferService {
         if (source.getBalance().compareTo(totalCost) < 0) {
             throw new RuntimeException("Fondos insuficientes en la cuenta de origen. Saldo disponible: "
                     + source.getBalance() + " " + source.getCurrency()
-                    + ". Coste total requerido (importe + comisión): " + totalCost + " " + source.getCurrency());
+                    + ". Coste total requerido: " + totalCost);
         }
 
         // 6. Conversión de divisas si operan en monedas diferentes (EUR <-> USD)
@@ -88,15 +105,14 @@ public class TransferService {
             amountToDeposit = amount.multiply(exchangeRate).setScale(2, RoundingMode.HALF_UP);
         }
 
-        // 7. Modificación atómica de balances
+        // 7. Modificación atómica de balances en base de datos
         source.setBalance(source.getBalance().subtract(totalCost));
         destination.setBalance(destination.getBalance().add(amountToDeposit));
 
-        // Salvamos los nuevos balances en la base de datos
         accountService.updateAccount(source);
         accountService.updateAccount(destination);
 
-        // 8. Registro y persistencia del recibo de la transferencia
+        // 8. Registro y persistencia de la transferencia en Postgres
         Transfer transfer = Transfer.builder()
                 .sourceAccount(source)
                 .destinationAccount(destination)
@@ -104,30 +120,49 @@ public class TransferService {
                 .fee(fee)
                 .concept(concept != null && !concept.trim().isEmpty() ? concept.trim() : "Transferencia " + type)
                 .transferType(type)
-                .status(Transfer.TransferStatus.COMPLETED) // Liquidada con éxito
+                .status(Transfer.TransferStatus.COMPLETED)
                 .build();
 
         Transfer savedTransfer = transferRepository.save(transfer);
 
-        // [Módulo Eventos - RabbitMQ]
-        // TODO: Publicar savedTransfer en la cola de RabbitMQ 'transfer.queue'
-        // para que sea analizada asíncronamente por el motor Antifraude y procesada por notificaciones.
+        // 9. PUBLICACIÓN DE EVENTO EN RABBITMQ
+        // Creamos el Payload plano y ligero para la cola
+        try {
+            TransferEvent event = new TransferEvent(
+                    savedTransfer.getId(),
+                    source.getIban(),
+                    source.getUser().getEmail(),
+                    destination.getIban(),
+                    destination.getUser().getEmail(),
+                    savedTransfer.getAmount(),
+                    savedTransfer.getFee(),
+                    savedTransfer.getConcept(),
+                    savedTransfer.getTransferType().name(),
+                    savedTransfer.getCreatedAt().toString()
+            );
+
+            // Publicamos asíncronamente en el Broker
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.EXCHANGE_NAME,
+                    RabbitMQConfig.TRANSFER_ROUTING_KEY,
+                    event
+            );
+
+            System.out.println(">>> [Event-Publisher] Evento de transferencia enviado a RabbitMQ con éxito. ID: " + savedTransfer.getId());
+        } catch (Exception e) {
+            // Un fallo en el broker de mensajería no debe tirar abajo la transacción bancaria de Postgres.
+            // Registramos el error de forma segura en logs para reintentos o análisis.
+            System.err.println(">>> [Event-Publisher-Error] Fallo al publicar el evento en el broker: " + e.getMessage());
+        }
 
         return savedTransfer;
     }
 
-    /**
-     * Lógica de Negocio: Calcula la comisión según el canal de transferencia.
-     * - SEPA: 0% comisión (gratis)
-     * - INSTANT: Comisión fija de 2.50 unidades
-     * - SWIFT: Comisión porcentual de 1.5% del importe enviado
-     */
     private BigDecimal calculateFee(BigDecimal amount, Transfer.TransferType type) {
         switch (type) {
             case INSTANT:
-                return new BigDecimal("2.50"); // Tarifa plana express
+                return new BigDecimal("2.50");
             case SWIFT:
-                // 1.5% del importe enviado
                 BigDecimal percentage = new BigDecimal("0.015");
                 return amount.multiply(percentage).setScale(2, RoundingMode.HALF_UP);
             case SEPA:
@@ -136,11 +171,6 @@ public class TransferService {
         }
     }
 
-    /**
-     * Retorna una tasa de cambio simulada en tiempo real.
-     * EUR a USD = 1.10 (El dólar vale un 10% menos)
-     * USD a EUR = 0.90 (El euro vale un 10% más)
-     */
     private BigDecimal getMockExchangeRate(Account.Currency from, Account.Currency to) {
         if (from == Account.Currency.EUR && to == Account.Currency.USD) {
             return new BigDecimal("1.10");
