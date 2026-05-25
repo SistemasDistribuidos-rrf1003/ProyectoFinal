@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de Cuenta - BankSphere</title>
+
+    <!-- Google Fonts & Bootstrap 5 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/variables.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+
+</head>
+<body>
+
+<div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="brand-logo">
+            <i class="bi bi-globe2"></i> BankSphere
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="/dashboard"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+            </li>
+            <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                <a href="/users"><i class="bi bi-people-fill"></i> Clientes (CRUD)</a>
+            </li>
+            <li class="nav-item active">
+                <a href="/accounts"><i class="bi bi-credit-card-2-front-fill"></i> Cuentas</a>
+            </li>
+            <li class="nav-item">
+                <a href="/transfers"><i class="bi bi-arrow-left-right"></i> Transferencias</a>
+            </li>
+            <li class="nav-item">
+                <a href="/analyst/dashboard"><i class="bi bi-shield-fill-exclamation"></i> Motor AML/KYC</a>
+            </li>
+        </ul>
+        <div class="mt-auto">
+            <a href="/logout" class="btn btn-outline-danger w-100 border-0 rounded-3 text-start py-2">
+                <i class="bi bi-box-arrow-left me-2"></i> Cerrar Sesión
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+
+        <!-- Breadcrumbs / Navegación rápida -->
+        <div class="mb-4 d-flex align-items-center gap-2 text-muted small">
+            <a href="/accounts" class="text-decoration-none text-muted hover-white">Mis Cuentas</a>
+            <i class="bi bi-chevron-right"></i>
+            <span class="text-white">Detalle de Cuenta</span>
+        </div>
+
+        <!-- Banner Resumen de Cuenta con Tarjeta integrada -->
+        <div class="account-summary-banner">
+            <div class="row g-4 align-items-center">
+
+                <!-- Columna 1: Mini Tarjeta Bancaria -->
+                <div class="col-md-5 col-lg-4 d-flex justify-content-center justify-content-md-start">
+                    <div class="mini-card" th:classappend="${'card-' + #strings.toLowerCase(account.accountType.name())}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="fw-bold small text-white"><i class="bi bi-globe2 text-info me-1"></i> BankSphere</div>
+                            <span class="badge bg-dark bg-opacity-50 text-light rounded-pill border-0 px-2 py-1" style="font-size: 0.6rem;" th:text="${account.accountType}">SAVINGS</span>
+                        </div>
+                        <div class="mini-card-number my-3" th:text="${account.iban}">ES21 1465 0100 9912 3456 7890</div>
+                        <div class="d-flex justify-content-between align-items-end">
+                            <div>
+                                <div style="font-size: 0.55rem; color: var(--text-muted); text-transform: uppercase;">Balance</div>
+                                <div class="fw-bold text-white h5 mb-0"
+                                     th:text="${#numbers.formatDecimal(account.balance, 1, 'POINT', 2, 'COMMA') + (account.currency.name() == 'EUR' ? ' €' : ' $')}">
+                                    0,00 €
+                                </div>
+                            </div>
+                            <div class="text-end" style="font-size: 0.7rem; text-transform: uppercase; font-weight: 500; color: var(--text-color);" th:text="${account.user.firstName + ' ' + account.user.lastName}">
+                                Javier Gómez
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna 2: Datos y Metricas KPI de flujo -->
+                <div class="col-md-7 col-lg-8">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1 mb-2 border border-success border-opacity-10" th:if="${account.status.name() == 'ACTIVE'}">ACTIVA</span>
+                            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-1 mb-2 border border-danger border-opacity-10" th:if="${account.status.name() == 'SUSPENDED'}">CONGELADA</span>
+                            <h3 class="fw-bold mb-0">Balance de Cuenta</h3>
+                            <p class="text-muted small mb-0">Divisa base de operaciones: <strong th:text="${account.currency}">EUR</strong></p>
+                        </div>
+                        <div class="text-md-end">
+                            <span class="text-muted small text-uppercase d-block">Saldo de Cuenta</span>
+                            <span class="h1 fw-bold font-family-outfit text-white" th:text="${#numbers.formatDecimal(account.balance, 1, 'POINT', 2, 'COMMA') + (account.currency.name() == 'EUR' ? ' €' : ' $')}">0,00 €</span>
+                        </div>
+                    </div>
+
+                    <!-- Fila de Metricas Inbound / Outbound -->
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <div class="kpi-flow-box">
+                                <div class="flow-icon" style="background: rgba(52, 211, 153, 0.1); color: var(--income-color);">
+                                    <i class="bi bi-arrow-down-left"></i>
+                                </div>
+                                <div>
+                                    <span class="text-muted small d-block uppercase">Ingresos Recibidos</span>
+                                    <strong class="text-white" th:text="${#numbers.formatDecimal(incomeTotal ?: 0.00, 1, 'POINT', 2, 'COMMA') + (account.currency.name() == 'EUR' ? ' €' : ' $')}">0,00 €</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="kpi-flow-box">
+                                <div class="flow-icon" style="background: rgba(248, 113, 113, 0.1); color: var(--expense-color);">
+                                    <i class="bi bi-arrow-up-right"></i>
+                                </div>
+                                <div>
+                                    <span class="text-muted small d-block uppercase">Gastos Emitidos</span>
+                                    <strong class="text-white" th:text="${#numbers.formatDecimal(expenseTotal ?: 0.00, 1, 'POINT', 2, 'COMMA') + (account.currency.name() == 'EUR' ? ' €' : ' $')}">0,00 €</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Historial de Movimientos -->
+        <div class="glass-card">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                <h4 class="fw-bold mb-0"><i class="bi bi-list-stars text-info me-2"></i>Historial de Movimientos</h4>
+
+                <!-- Botón para operar desde esta cuenta -->
+                <div th:if="${account.status.name() == 'ACTIVE'}">
+                    <a th:href="@{/transfers/new(source=${account.iban})}" class="btn btn-action-primary">
+                        <i class="bi bi-send-fill me-2"></i> Emitir Transferencia
+                    </a>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-custom table-hover">
+                    <thead>
+                    <tr>
+                        <th>Fecha y Hora</th>
+                        <th>Concepto de Pago</th>
+                        <th>Tipo de Operación</th>
+                        <th class="text-end">Importe Neto</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Bucle dinámico por cada transferencia / movimiento -->
+                    <tr th:each="movement : ${movements}">
+                        <td th:text="${#temporals.format(movement.createdAt, 'dd/MM/yyyy HH:mm')}">25/05/2026 14:15</td>
+                        <td class="fw-semibold" th:text="${movement.concept}">Concepto de ejemplo</td>
+                        <td>
+                            <span class="badge-type" th:text="${movement.transferType}">SEPA</span>
+                        </td>
+
+                        <!-- Importe formateado con color dinámico -->
+                        <!-- Si el IBAN de la cuenta actual es el DESTINO, es un INGRESO (+) -->
+                        <!-- Si el IBAN de la cuenta actual es el ORIGEN, es un GASTO (-) -->
+                        <td class="text-end">
+                                    <span th:if="${movement.destinationAccount.iban == account.iban}" class="value-positive"
+                                          th:text="${'+' + #numbers.formatDecimal(movement.amount, 1, 'POINT', 2, 'COMMA') + (account.currency.name() == 'EUR' ? ' €' : ' $')}">
+                                        +0,00 €
+                                    </span>
+                            <span th:if="${movement.sourceAccount.iban == account.iban}" class="value-negative"
+                                  th:text="${'-' + #numbers.formatDecimal(movement.amount + movement.fee, 1, 'POINT', 2, 'COMMA') + (account.currency.name() == 'EUR' ? ' €' : ' $')}">
+                                        -0,00 €
+                                    </span>
+                        </td>
+                    </tr>
+                    <!-- En caso de que no haya movimientos registrados -->
+                    <tr th:if="${movements.isEmpty()}">
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            <i class="bi bi-clock-history fs-1 d-block mb-3" style="color: #4b5563;"></i>
+                            Esta cuenta no registra movimientos transaccionales en su historial.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Botones de Acción Globales de Retorno -->
+            <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top" style="border-color: var(--border-color) !important;">
+                <a href="/accounts" class="btn btn-action-secondary"><i class="bi bi-arrow-left me-2"></i> Volver a Cuentas</a>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
