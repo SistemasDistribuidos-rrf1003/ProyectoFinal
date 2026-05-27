@@ -1,0 +1,96 @@
+<th:block th:fragment="sidebar(activeLink)">
+
+    <!-- 1. Cabecera Móvil (Solo visible en pantallas pequeñas, d-lg-none) -->
+    <!-- Provee el botón de hamburguesa para deslizar el menú lateral -->
+    <nav class="navbar navbar-dark d-lg-none px-4 py-3 w-100" style="background-color: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); z-index: 100;">
+        <div class="container-fluid p-0 d-flex justify-content-between align-items-center">
+            <span class="brand-logo mb-0 fs-4">
+                <i class="bi bi-globe2 text-info"></i> BankSphere
+            </span>
+            <button class="btn border-0 p-1 text-white" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">
+                <i class="bi bi-list fs-2 text-info"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 2. Barra Lateral Deslizable Responsiva (Offcanvas-lg) -->
+    <!-- En PC actúa como sidebar fija; en móviles actúa como offcanvas táctil deslizante -->
+    <div class="offcanvas-lg offcanvas-start sidebar" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel" style="z-index: 1050;">
+
+        <!-- Cabecera de cierre (Solo visible en versión móvil) -->
+        <div class="offcanvas-header d-lg-none border-bottom" style="border-color: var(--border-color) !important;">
+            <h5 class="offcanvas-title brand-logo mb-0 fs-4" id="sidebarMenuLabel">
+                <i class="bi bi-globe2 text-info"></i> BankSphere
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu" aria-label="Close"></button>
+        </div>
+
+        <!-- Cuerpo del Menú de Navegación -->
+        <div class="offcanvas-body p-0 d-flex flex-column h-100">
+            <!-- Logo principal de la marca (Oculto en móvil, ya que la cabecera lo muestra) -->
+            <div class="brand-logo d-none d-lg-flex mb-4">
+                <i class="bi bi-globe2"></i> BankSphere
+            </div>
+
+            <!-- Menú de enlaces dinámicos controlados por Roles -->
+            <ul class="nav-menu">
+                <!-- Enlace: Dashboard (Común para todos) -->
+                <li class="nav-item" th:classappend="${activeLink == 'dashboard'} ? 'active'">
+                    <a href="/dashboard">
+                        <i class="bi bi-grid-1x2-fill"></i> Dashboard
+                    </a>
+                </li>
+
+                <!-- Enlace: Clientes CRUD (ADMIN y ANALYST) -->
+                <li class="nav-item" th:classappend="${activeLink == 'users'} ? 'active'" sec:authorize="hasAnyRole('ADMIN', 'ANALYST')">
+                    <a href="/users">
+                        <i class="bi bi-people-fill"></i> Clientes (CRUD)
+                    </a>
+                </li>
+
+                <!-- Enlace: Cuentas Bancarias (ADMIN y USER) -->
+                <li class="nav-item" th:classappend="${activeLink == 'accounts'} ? 'active'" sec:authorize="hasAnyRole('ADMIN', 'USER')">
+                    <a href="/accounts">
+                        <i class="bi bi-credit-card-2-front-fill"></i> Cuentas
+                    </a>
+                </li>
+
+                <!-- Enlace: Realizar Transferencias (ADMIN y USER) -->
+                <li class="nav-item" th:classappend="${activeLink == 'transfers'} ? 'active'" sec:authorize="hasAnyRole('ADMIN', 'USER')">
+                    <a href="/transfers">
+                        <i class="bi bi-arrow-left-right"></i> Transferencias
+                    </a>
+                </li>
+
+                <!-- Enlace: Motor AML/KYC Antifraude (ADMIN y ANALYST) -->
+                <li class="nav-item" th:classappend="${activeLink == 'antifraud'} ? 'active'" sec:authorize="hasAnyRole('ADMIN', 'ANALYST')">
+                    <a href="/analyst/dashboard">
+                        <i class="bi bi-shield-fill-exclamation"></i> Motor AML/KYC
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Sección inferior: Datos del usuario de sesión y Cierre -->
+            <div class="mt-auto border-top pt-4" style="border-color: var(--border-color) !important;">
+                <div class="d-flex align-items-center gap-3 px-3 mb-4">
+                    <div class="avatar-circle" style="width: 38px; height: 38px; font-size: 0.8rem;"
+                         th:text="${#strings.substring(#authentication.principal.username, 0, 2).toUpperCase()}">US</div>
+                    <div class="overflow-hidden">
+                        <div class="small fw-semibold text-white text-truncate" sec:authentication="name">Usuario Activo</div>
+                        <div class="text-muted" style="font-size: 0.65rem;" sec:authorize="hasRole('ADMIN')">ADMINISTRADOR</div>
+                        <div class="text-muted" style="font-size: 0.65rem;" sec:authorize="hasRole('ANALYST')">ANALISTA RIESGOS</div>
+                        <div class="text-muted" style="font-size: 0.65rem;" sec:authorize="hasRole('USER')">CLIENTE BANCARIO</div>
+                    </div>
+                </div>
+
+                <form th:action="@{/logout}" method="POST" id="logoutForm">
+                    <!-- Protección CSRF integrada por Thymeleaf en formularios -->
+                    <button type="submit" class="btn btn-outline-danger w-100 border-0 rounded-3 text-start py-2 px-3">
+                        <i class="bi bi-box-arrow-left me-2"></i> Cerrar Sesión
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</th:block>

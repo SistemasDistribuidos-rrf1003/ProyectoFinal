@@ -18,7 +18,7 @@
 
 <div class="app-layout">
     <!-- Sidebar Navigation -->
-    <aside class="sidebar">
+    <aside th:replace="~{fragments/sidebar :: sidebar('users')}">
         <div class="brand-logo">
             <i class="bi bi-globe2"></i> BankSphere
         </div>
