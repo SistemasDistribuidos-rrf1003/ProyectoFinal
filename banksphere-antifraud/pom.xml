@@ -19,25 +19,38 @@
     <description>Módulo de Control Antifraude, Motor de Reglas de Riesgo y AML</description>
 
     <dependencies>
-        <!-- 1. Enlace/Dependencia Directa con el módulo común (DTOs y Excepciones compartidas) -->
+        <!-- Enlace/Dependencia Directa con el módulo común (DTOs y Excepciones compartidas) -->
         <dependency>
             <groupId>com.banksphere</groupId>
             <artifactId>banksphere-common</artifactId>
         </dependency>
 
-        <!-- 2. Spring Boot Web Starter para exponer la REST API de analistas y consolas de riesgo -->
+        <!-- Spring Boot Web Starter para exponer la REST API de analistas y consolas de riesgo -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- 3. Spring Boot AMQP (RabbitMQ Client) para consumir eventos de transferencias en tiempo real -->
+        <!-- Spring Boot AMQP (RabbitMQ Client) para consumir eventos de transferencias en tiempo real -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
 
-        <!-- 4. MapStruct para mapear estructuras de datos internas a los DTOs de reporte de fraude -->
+        <!-- Dependencia para persistencia de datos (JPA e Hibernate) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- Driver JDBC de PostgreSQL (o MySQL según elijas) para conectarse a la Base de Datos -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- MapStruct para mapear estructuras de datos internas a los DTOs de reporte de fraude -->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
