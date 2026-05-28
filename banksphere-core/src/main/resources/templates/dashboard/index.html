@@ -10,7 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
-    <!-- Hojas de Estilo Externas del Sistema de Diseño -->
+    <!-- Enlaces Estáticos Estilizados (Thymeleaf) -->
     <link rel="stylesheet" th:href="@{/css/variables.css}">
     <link rel="stylesheet" th:href="@{/css/dashboard.css}">
 
@@ -51,34 +51,8 @@
 <body>
 
 <div class="app-layout">
-    <!-- Sidebar General -->
-    <aside th:replace="~{fragments/sidebar :: sidebar('dashboard')}">
-        <div class="brand-logo">
-            <i class="bi bi-globe2"></i> BankSphere
-        </div>
-        <ul class="nav-menu">
-            <li class="nav-item active">
-                <a href="/dashboard"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
-            </li>
-            <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                <a href="/users"><i class="bi bi-people-fill"></i> Clientes (CRUD)</a>
-            </li>
-            <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'USER')">
-                <a href="/accounts"><i class="bi bi-credit-card-2-front-fill"></i> Cuentas</a>
-            </li>
-            <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'USER')">
-                <a href="/transfers"><i class="bi bi-arrow-left-right"></i> Transferencias</a>
-            </li>
-            <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'ANALYST')">
-                <a href="/analyst/dashboard"><i class="bi bi-shield-fill-exclamation"></i> Motor AML/KYC</a>
-            </li>
-        </ul>
-        <div class="mt-auto">
-            <a href="/logout" class="btn btn-outline-danger w-100 border-0 rounded-3 text-start py-2">
-                <i class="bi bi-box-arrow-left me-2"></i> Cerrar Sesión
-            </a>
-        </div>
-    </aside>
+    <!-- INVOCACIÓN MODULAR DEL MENU SIDEBAR -->
+    <aside th:replace="~{fragments/sidebar :: sidebar('dashboard')}"></aside>
 
     <!-- Main Dashboard View -->
     <main class="main-content">
@@ -90,9 +64,9 @@
             </div>
             <div class="d-flex align-items-center gap-3">
                 <span class="badge bg-secondary py-2 px-3 rounded-pill" sec:authentication="name">User</span>
-                <!-- Muestra el rol actual para verificar la seguridad -->
                 <span class="badge bg-info py-2 px-3 rounded-pill" sec:authorize="hasRole('USER')">CLIENTE</span>
-                <span class="badge bg-warning py-2 px-3 rounded-pill text-dark" sec:authorize="hasRole('ANALYST')">ANALISTA DE RIESGOS</span>
+                <span class="badge bg-warning py-2 px-3 text-dark rounded-pill" sec:authorize="hasRole('ANALYST')">ROLE_ANALYST</span>
+                <span class="badge bg-primary py-2 px-3 rounded-pill" sec:authorize="hasRole('ADMIN')">ROLE_ADMIN</span>
             </div>
         </div>
 
@@ -148,7 +122,7 @@
                 </div>
             </div>
 
-            <!-- Gráfico Derecha: Gráfico Radial/Radar de Riesgo en Tiempo Real -->
+            <!-- Gráfico Derecha: Gráfico Radial de Riesgo (Radar Chart) -->
             <div class="col-lg-5">
                 <div class="chart-box">
                     <div class="chart-title"><i class="bi bi-radar text-warning"></i> Distribución Radial de Riesgo (Vectores de Amenaza)</div>
@@ -195,7 +169,7 @@
             }
         });
 
-        // 2. [CRÍTICO] Configuración Gráfico 2: Radial de Riesgo (Radar Chart)
+        // 2. Configuración Gráfico 2: Radial de Riesgo (Radar Chart)
         const ctxRadial = document.getElementById('radialRiskChart').getContext('2d');
         new Chart(ctxRadial, {
             type: 'radar',
@@ -209,8 +183,221 @@
                 ],
                 datasets: [{
                     label: 'Criticidad del Vector',
-                    data: [45, 80, 20, 50, 15], // Valores semilla de simulación
-                    backgroundColor: 'rgba(177, 92, 255, 0.15)', // Púrpura esmerilado
+                    data: [45, 80, 20, 50, 15],
+                    backgroundColor: 'rgba(177, 92, 255, 0.15)',
+                    borderColor: '#b15cff',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#5c53ff',
+                    pointBorderColor: '#ffffff',
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    r: {
+                        angleLines: { color: 'rgba(255, 255, 255, 0.08)' },
+                        grid: { color: 'rgba(255, 255, 255, 0.08)' },
+                        pointLabels: { color: '#9ca3af', font: { size: 10, family: 'Inter' } },
+                        ticks: { display: false },
+                        suggestedMin: 0,
+                        suggestedMax: 100
+                    }
+                }
+            }
+        });
+    });
+</script>
+</body>
+</html><!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consola Financiera Inteligente - BankSphere</title>
+
+    <!-- Google Fonts & Bootstrap 5 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Enlaces Estáticos Estilizados (Thymeleaf) -->
+    <link rel="stylesheet" th:href="@{/css/variables.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+
+    <style>
+        .chart-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-lg);
+            padding: 24px;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: var(--card-shadow);
+            height: 400px;
+            position: relative;
+        }
+
+        .chart-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .metric-glow-value {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            background: var(--primary-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-layout">
+    <!-- INVOCACIÓN MODULAR DEL MENU SIDEBAR -->
+    <aside th:replace="~{fragments/sidebar :: sidebar('dashboard')}"></aside>
+
+    <!-- Main Dashboard View -->
+    <main class="main-content">
+        <!-- Header Superior -->
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <div>
+                <h1 class="font-family-outfit fw-bold h2 mb-1">Consola de Analytics Financiero</h1>
+                <p class="text-muted small mb-0">Resumen operativo, métricas y evaluación de riesgos en tiempo real</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-secondary py-2 px-3 rounded-pill" sec:authentication="name">User</span>
+                <span class="badge bg-info py-2 px-3 rounded-pill" sec:authorize="hasRole('USER')">CLIENTE</span>
+                <span class="badge bg-warning py-2 px-3 text-dark rounded-pill" sec:authorize="hasRole('ANALYST')">ROLE_ANALYST</span>
+                <span class="badge bg-primary py-2 px-3 rounded-pill" sec:authorize="hasRole('ADMIN')">ROLE_ADMIN</span>
+            </div>
+        </div>
+
+        <!-- Fila de métricas primarias (KPIs) -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-3 col-sm-6">
+                <div class="metric-card">
+                    <div>
+                        <span class="text-muted small text-uppercase">Volumen Líquido</span>
+                        <h3 class="fw-bold mt-1 mb-0 metric-glow-value">1.450 K</h3>
+                    </div>
+                    <div class="metric-icon" style="background: rgba(0, 242, 254, 0.1); color: var(--primary-neon);"><i class="bi bi-bank"></i></div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="metric-card">
+                    <div>
+                        <span class="text-muted small text-uppercase">Alertas Activas</span>
+                        <h3 class="fw-bold mt-1 mb-0 text-warning">4</h3>
+                    </div>
+                    <div class="metric-icon" style="background: rgba(251, 191, 36, 0.1); color: var(--warning-color);"><i class="bi bi-shield-exclamation"></i></div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="metric-card">
+                    <div>
+                        <span class="text-muted small text-uppercase">Scoring Medio de Riesgo</span>
+                        <h3 class="fw-bold mt-1 mb-0 text-danger">34.2%</h3>
+                    </div>
+                    <div class="metric-icon" style="background: rgba(248, 113, 113, 0.1); color: var(--expense-color);"><i class="bi bi-graph-down-arrow"></i></div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="metric-card">
+                    <div>
+                        <span class="text-muted small text-uppercase">Operaciones / Min</span>
+                        <h3 class="fw-bold mt-1 mb-0 text-success">12.5</h3>
+                    </div>
+                    <div class="metric-icon" style="background: rgba(52, 211, 153, 0.1); color: var(--income-color);"><i class="bi bi-activity"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila de Gráficos (Analytics) -->
+        <div class="row g-4 mb-5">
+            <!-- Gráfico Izquierda: Evolución de saldo -->
+            <div class="col-lg-7">
+                <div class="chart-box">
+                    <div class="chart-title"><i class="bi bi-graph-up text-info"></i> Evolución de Saldo e Ingresos (Mensual)</div>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="evolutionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico Derecha: Gráfico Radial de Riesgo (Radar Chart) -->
+            <div class="col-lg-5">
+                <div class="chart-box">
+                    <div class="chart-title"><i class="bi bi-radar text-warning"></i> Distribución Radial de Riesgo (Vectores de Amenaza)</div>
+                    <div style="height: 300px; position: relative; display: flex; justify-content: center;">
+                        <canvas id="radialRiskChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Bootstrap & Chart.js desde CDN -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Script del renderizador de gráficos dinámicos -->
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // 1. Configuración Gráfico 1: Evolución de Saldo (Línea)
+        const ctxLine = document.getElementById('evolutionChart').getContext('2d');
+        new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Ingresos Netos (€)',
+                    data: [12000, 19000, 15000, 25000, 22000, 32000],
+                    borderColor: '#00f2fe',
+                    backgroundColor: 'rgba(0, 242, 254, 0.05)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#9ca3af' } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+
+        // 2. Configuración Gráfico 2: Radial de Riesgo (Radar Chart)
+        const ctxRadial = document.getElementById('radialRiskChart').getContext('2d');
+        new Chart(ctxRadial, {
+            type: 'radar',
+            data: {
+                labels: [
+                    'Umbral AML (>10k)',
+                    'Frecuencia Operativa',
+                    'SWIFT Internacional',
+                    'KYC Pendiente',
+                    'Cuentas Suspendidas'
+                ],
+                datasets: [{
+                    label: 'Criticidad del Vector',
+                    data: [45, 80, 20, 50, 15],
+                    backgroundColor: 'rgba(177, 92, 255, 0.15)',
                     borderColor: '#b15cff',
                     borderWidth: 2,
                     pointBackgroundColor: '#5c53ff',

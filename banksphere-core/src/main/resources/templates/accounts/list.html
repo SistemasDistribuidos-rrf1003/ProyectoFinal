@@ -9,41 +9,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Enlaces Estáticos Estilizados (Thymeleaf) -->
     <link rel="stylesheet" th:href="@{/css/variables.css}">
     <link rel="stylesheet" th:href="@{/css/dashboard.css}">
-
 </head>
 <body>
 
 <div class="app-layout">
-    <!-- Sidebar lateral -->
-    <aside th:replace="~{fragments/sidebar :: sidebar('accounts')}">
-        <div class="brand-logo">
-            <i class="bi bi-globe2"></i> BankSphere
-        </div>
-        <ul class="nav-menu">
-            <li class="nav-item">
-                <a href="/dashboard"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
-            </li>
-            <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                <a href="/users"><i class="bi bi-people-fill"></i> Clientes (CRUD)</a>
-            </li>
-            <li class="nav-item active">
-                <a href="/accounts"><i class="bi bi-credit-card-2-front-fill"></i> Cuentas</a>
-            </li>
-            <li class="nav-item">
-                <a href="/transfers"><i class="bi bi-arrow-left-right"></i> Transferencias</a>
-            </li>
-            <li class="nav-item">
-                <a href="/analyst/dashboard"><i class="bi bi-shield-fill-exclamation"></i> Motor AML/KYC</a>
-            </li>
-        </ul>
-        <div class="mt-auto">
-            <a href="/logout" class="btn btn-outline-danger w-100 border-0 rounded-3 text-start py-2">
-                <i class="bi bi-box-arrow-left me-2"></i> Cerrar Sesión
-            </a>
-        </div>
-    </aside>
+    <!-- INVOCACIÓN MODULAR DEL MENU SIDEBAR -->
+    <aside th:replace="~{fragments/sidebar :: sidebar('accounts')}"></aside>
 
     <!-- Contenido Central -->
     <main class="main-content">
@@ -54,7 +29,7 @@
                 <h1 class="font-family-outfit fw-bold h2 mb-1" th:text="${isAdmin} ? 'Consola Global de Cuentas' : 'Mis Cuentas Financieras'">Mis Cuentas Bancarias</h1>
                 <p class="text-muted small mb-0" th:text="${isAdmin} ? 'Supervisión, alta y suspensión de cuentas para cualquier usuario en la red.' : 'Monitorea tus saldos, tarjetas digitales y realiza transferencias inmediatas.'">Detalles de las cuentas</p>
             </div>
-            <!-- Botón de apertura (Solo para ADMIN) -->
+            <!-- Botón de apertura (Solo para ADMINISTRADORES) -->
             <div th:if="${isAdmin}">
                 <a href="/accounts/new" class="btn btn-add">
                     <i class="bi bi-plus-circle-fill me-2"></i> Abrir Nueva Cuenta
@@ -75,19 +50,18 @@
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-        <!-- Tarjeta Informativa en caso de que un Cliente no tenga cuentas aún -->
+        <!-- Tarjeta Informativa si el cliente no posee cuentas -->
         <div th:if="${accounts.isEmpty()}" class="text-center py-5 rounded-4 border p-4 mb-4" style="background: var(--card-bg); border-color: var(--border-color) !important;">
             <i class="bi bi-credit-card-2-front fs-1 d-block mb-3 text-muted"></i>
             <h4 class="fw-bold">No posees cuentas bancarias activas</h4>
             <p class="text-muted small max-width-500 mx-auto">Para comenzar a operar en BankSphere, solicita a un administrador del sistema que dé de alta una cuenta de ahorros o corriente asociada a tu documento nacional de identidad.</p>
         </div>
 
-        <!-- GRID PRINCIPAL DE TARJETAS 3D -->
+        <!-- GRID PRINCIPAL DE TARJETAS VIRTUALES 3D -->
         <div class="row g-4 mb-5" th:if="${!accounts.isEmpty()}">
             <div class="col-lg-6 col-xxl-4 card-perspective-container" th:each="account : ${accounts}">
 
-                <!-- Tarjeta Virtual Dinámica -->
-                <!-- Aplica colores según tipo de cuenta, y sombra/opacidad si está SUSPENDIDA -->
+                <!-- Tarjeta Bancaria Virtual 3D Glassmorphic -->
                 <div class="virtual-card"
                      th:classappend="${'card-' + #strings.toLowerCase(account.accountType.name())} + ' ' + ${account.status.name() == 'SUSPENDED' ? 'card-status-suspended' : ''}">
 
@@ -105,7 +79,7 @@
                     <!-- Chip de seguridad en 3D -->
                     <div class="card-chip my-2"></div>
 
-                    <!-- IBAN de la cuenta formateado -->
+                    <!-- IBAN de la cuenta -->
                     <div class="card-number" th:text="${account.iban}">ES21 1465 0100 9912 3456 7890</div>
 
                     <!-- Fila de saldos y Titular -->
@@ -124,9 +98,9 @@
                     </div>
                 </div>
 
-                <!-- Panel de Controles Rápidos Debajo de cada Tarjeta (Diferenciado por Roles) -->
+                <!-- Panel de Controles Rápidos Debajo de cada Tarjeta -->
                 <div class="mt-3 d-flex gap-2">
-                    <!-- 1. Enlaces Rápidos para el CLIENTE COMÚN (USER) -->
+                    <!-- Enlaces Rápidos para el CLIENTE COMÚN (USER) -->
                     <a th:if="${!isAdmin && account.status.name() == 'ACTIVE'}"
                        th:href="@{/transfers/new(source=${account.iban})}"
                        class="btn btn-sm btn-outline-info w-50 py-2 rounded-3 border-1">
@@ -139,8 +113,7 @@
                         <i class="bi bi-journal-text me-1"></i> Movimientos
                     </a>
 
-                    <!-- 2. Enlaces Rápidos Administrativos (Solo ADMIN) -->
-                    <!-- Botón para congelar/activar cuenta en 1 clic -->
+                    <!-- Controles Administrativos (ADMIN) -->
                     <a th:if="${isAdmin}"
                        th:href="@{/accounts/toggle-status/{id}(id=${account.id})}"
                        class="btn btn-sm w-100 py-2 rounded-3 text-center border-0 fw-semibold"
