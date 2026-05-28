@@ -54,4 +54,25 @@
     --border-radius-sm: 12px;
 
     --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+    /*  6. PALETA DE MODO CLARO (LIGHT MODE) */
+    .light-mode {
+        --bg-color: #f8fafc;          /* Gris azulado ultra-claro (Slate 50) */
+        --sidebar-bg: #ffffff;        /* Barra lateral blanca pura */
+        --card-bg: rgba(255, 255, 255, 0.75); /* Cristal esmerilado blanco */
+        --input-bg: #f1f5f9;          /* Fondo de inputs gris claro */
+
+        /* Colores de Texto */
+        --text-color: #0f172a;        /* Azul pizarra oscuro (Slate 900) */
+        --text-muted: #64748b;        /* Gris pizarra intermedio (Slate 500) */
+
+        /* Bordes y Sombras Claras */
+        --border-color: rgba(15, 23, 42, 0.08);
+        --border-hover: rgba(15, 23, 42, 0.16);
+        --card-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+
+        /* Adaptación de gráficos en modo claro (opcional) */
+        --primary-neon: #0284c7;      /* Azul cielo de alta visibilidad */
+        --primary-blue: #0369a1;
+    }
 }
