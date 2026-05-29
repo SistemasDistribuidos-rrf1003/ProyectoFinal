@@ -23,28 +23,34 @@
             <artifactId>banksphere-common</artifactId>
         </dependency>
 
-        <!-- 2. Spring Boot WebSocket Starter para comunicación push bidireccional cliente-servidor -->
+        <!-- Spring Boot WebSocket Starter para comunicación push bidireccional cliente-servidor -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
 
-        <!-- 3. Spring Boot Mail Starter para el envío asíncrono de correos electrónicos (SMTP) -->
+        <!-- Spring Boot Mail Starter para el envío asíncrono de correos electrónicos (SMTP) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
-        <!-- 4. Spring Boot AMQP (RabbitMQ Client) para la escucha y enrutado de eventos distribuidos -->
+        <!-- Spring Boot AMQP (RabbitMQ Client) para la escucha y enrutado de eventos distribuidos -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
 
-        <!-- 5. Spring Boot Web Starter (Necesario para proveer el contenedor web Tomcat sobre el cual corre WebSocket) -->
+        <!-- Spring Boot Web Starter (Necesario para proveer el contenedor web Tomcat sobre el cual corre WebSocket) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Motor de Plantillas Thymeleaf (CRÍTICO para compilar plantillas HTML de correos) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
     </dependencies>
 
