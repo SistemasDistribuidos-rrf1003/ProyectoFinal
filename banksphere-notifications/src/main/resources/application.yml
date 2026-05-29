@@ -24,8 +24,12 @@ spring:
       mail:
         smtp:
           auth: false
+          connectiontimeout: 5000 # Tiempo máximo de espera para establecer conexión (5 segundos)
+          timeout: 5000           # Tiempo máximo de lectura
+          write-timeout: 5000
           starttls:
-            enable: false # Mailpit opera localmente sin requerir cifrado TLS forzado
+            enable: false         # Desactivamos cifrado TLS requerido para servidores reales (Gmail/Outlook)
+
 
 # 3. Configuración de Logs
 logging:
