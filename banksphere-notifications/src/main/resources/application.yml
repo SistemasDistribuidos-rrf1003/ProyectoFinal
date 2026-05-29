@@ -1,0 +1,35 @@
+# =============================================================================
+#     BANKSphere Notifications - CONFIGURACIÓN DE PROPIEDADES (YAML)
+# =============================================================================
+
+server:
+  port: 8083  # Puerto único de escucha para la conexión de WebSockets
+
+spring:
+  application:
+    name: banksphere-notifications
+
+  # 1. Configuración de Conexión al Message Broker de RabbitMQ
+  rabbitmq:
+    host: localhost   # Cambiar a 'rabbitmq' al empaquetar con docker-compose
+    port: 5672
+    username: guest
+    password: guest
+
+  # 2. Configuración de Spring Mail (SMTP Sandbox - Mailpit)
+  mail:
+    host: localhost   # Cambiar a 'mailpit' al empaquetar con docker-compose
+    port: 1025        # Puerto SMTP sin autenticación de Mailpit
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false # Mailpit opera localmente sin requerir cifrado TLS forzado
+
+# 3. Configuración de Logs
+logging:
+  level:
+    root: INFO
+    org.springframework.amqp: INFO
+    com.banksphere.notifications: DEBUG # Monitorea el envío de mails y empujes de WebSockets
