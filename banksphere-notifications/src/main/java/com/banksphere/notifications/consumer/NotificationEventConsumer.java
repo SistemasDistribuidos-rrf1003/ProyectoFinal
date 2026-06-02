@@ -1,5 +1,6 @@
 package com.banksphere.notifications.consumer;
 
+import com.banksphere.notifications.service.MailSenderService;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -8,24 +9,23 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 
 /**
- * Consumidor distribuido que actúa como puente reactivo:
- * Escucha eventos en RabbitMQ y los retransmite en tiempo real al navegador web vía WebSockets.
+ * Consumidor Reactivo y Orquestador de Alertas.
+ * Escucha eventos distribuidos de RabbitMQ y despacha de forma asíncrona notificaciones push e emails HTML.
  */
 @Component
 public class NotificationEventConsumer {
 
-    private final SimpMessagingTemplate messagingTemplate; // Plantilla de envío de WebSockets
-    // private final MailSenderService mailSenderService;   // Inyectado para Fase 8 (Emails)
+    private final SimpMessagingTemplate messagingTemplate;
+    private final MailSenderService mailSenderService;
 
     @Autowired
-    public NotificationEventConsumer(SimpMessagingTemplate messagingTemplate) {
+    public NotificationEventConsumer(SimpMessagingTemplate messagingTemplate, MailSenderService mailSenderService) {
         this.messagingTemplate = messagingTemplate;
-        // this.mailSenderService = mailSenderService;
+        this.mailSenderService = mailSenderService;
     }
 
-    /**
-     * DTO plano idéntico de transferencia. Mapea el payload serializado en JSON que viaja por RabbitMQ.
-     */
+    // ESTRUCTURA DE EVENTOS (PAYLOADS JSON)
+
     public record TransferEvent(
             Long id,
             String sourceIban,
@@ -39,30 +39,65 @@ public class NotificationEventConsumer {
             String createdAt
     ) {}
 
-    /**
-     * Escuchador de RabbitMQ.
-     * Consume transacciones de 'transfer.queue' de forma asíncrona.
-     */
+    public record UserRegistrationEvent(
+            String email,
+            String firstName,
+            String lastName,
+            String nationalId
+    ) {}
+
+    public record FraudAlertEvent(
+            Long transferId,
+            String sourceIban,
+            String userEmail,
+            String userName,
+            Integer riskScore,
+            String riskLevel,
+            String triggeredRules,
+            String reason
+    ) {}
+
+    // =========================================================================
+    // 1. DISPARADOR DE COMPROBANTES DE TRANSFERENCIA (transfer.queue)
+    // =========================================================================
     @RabbitListener(queues = "transfer.queue")
     public void handleTransferEvent(TransferEvent event) {
-        System.out.println("<<< [Notifications-Broker] Evento interceptado en RabbitMQ. ID: " + event.id());
+        System.out.println("<<< [Event-Trigger] Procesando comprobante de transferencia ID: " + event.id());
 
-        // 1. TRANSMISIÓN PUSH EN TIEMPO REAL VÍA WEBSOCKETS
-        // Difundimos el evento al canal general '/topic/notifications'
-        // Cualquier navegador conectado y suscrito a esta ruta reaccionará de inmediato
-        try {
-            messagingTemplate.convertAndSend("/topic/notifications", event);
-            System.out.println(">>> [WebSocket-Push] Notificación enviada exitosamente a /topic/notifications");
-        } catch (Exception e) {
-            System.err.println(">>> [WebSocket-Error] Fallo al difundir mensaje push: " + e.getMessage());
-        }
+        // 1. Alerta Push interactiva al navegador
+        messagingTemplate.convertAndSend("/topic/notifications", event);
 
-        // 2. [Fase 8: Emails] - Envío asíncrono de comprobante de seguridad por correo
-        try {
-            // mailSenderService.sendTransferEmail(event);
-            System.out.println(">>> [Mail-Task] Disparado envío de email de confirmación para: " + event.sourceUserEmail());
-        } catch (Exception e) {
-            System.err.println(">>> [Mail-Error] Fallo al disparar el proceso de correo: " + e.getMessage());
-        }
+        // 2. Envío de comprobante en HTML por Email
+        mailSenderService.sendTransferEmail(event);
+    }
+
+    // =========================================================================
+    // 2. DISPARADOR DE CORREOS DE BIENVENIDA (user.registration.queue)
+    // =========================================================================
+    @RabbitListener(queues = "user.registration.queue")
+    public void handleUserRegistrationEvent(UserRegistrationEvent event) {
+        System.out.println("<<< [Event-Trigger] Nuevo cliente registrado. Disparando bienvenida para: " + event.email());
+
+        // 1. Envío asíncrono del correo de bienvenida e inicio de KYC
+        mailSenderService.sendWelcomeEmail(event.email(), event.firstName() + " " + event.lastName());
+    }
+
+    // =========================================================================
+    // 3. DISPARADOR DE CORREOS DE ALERTA CRÍTICA DE FRAUDE (fraud.alert.queue)
+    // =========================================================================
+    @RabbitListener(queues = "fraud.alert.queue")
+    public void handleFraudAlertEvent(FraudAlertEvent event) {
+        System.out.println("<<< [Event-Trigger] ¡ALERTA CRÍTICA DE RIESGO! Interceptado fraude en transfer ID: " + event.transferId());
+
+        // 1. Difundimos una notificación push de ciberseguridad especial al canal de seguridad
+        messagingTemplate.convertAndSend("/topic/security", event);
+
+        // 2. Envío del correo urgente de seguridad de cuenta congelada / suspendida
+        mailSenderService.sendSecurityAlertEmail(
+                event.userEmail(),
+                event.userName(),
+                event.reason(),
+                event.sourceIban()
+        );
     }
 }

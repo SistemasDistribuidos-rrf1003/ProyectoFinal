@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #08090d; color: #f3f4f6; padding: 40px 0; margin: 0; }
+        .container { max-width: 600px; margin: 0 auto; background: #11141d; border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; padding: 45px; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: #00f2fe; text-align: center; margin-bottom: 25px; }
+        .badge-success { background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); padding: 8px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: inline-block; text-align: center; margin: 0 auto 25px auto; }
+        .receipt-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px; padding: 25px; margin-bottom: 25px; }
+        .receipt-row { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.04); padding: 12px 0; font-size: 0.88rem; color: #9ca3af; }
+        .receipt-row:last-child { border-bottom: none; }
+        .amount-big { font-size: 2.2rem; font-weight: bold; color: #ffffff; text-align: center; margin: 20px 0; }
+        .footer { text-align: center; font-size: 0.75rem; color: #4b5563; margin-top: 40px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="logo">🌐 BankSphere Receipts</div>
+    <div style="text-align: center;">
+        <span class="badge-success">✓ TRANSFERENCIA LIQUIDADA</span>
+    </div>
+
+    <p style="text-align: center; color: #9ca3af;">Hemos procesado tu solicitud de envío de fondos con éxito. A continuación, el detalle del comprobante de transferencia:</p>
+
+    <div class="amount-big">
+        <span th:text="${#numbers.formatDecimal(amount, 1, 'POINT', 2, 'COMMA')}">0.00</span> €
+    </div>
+
+    <div class="receipt-card">
+        <div class="receipt-row">
+            <span>ID Operación:</span>
+            <strong style="color: white;" th:text="${id}">12345</strong>
+        </div>
+        <div class="receipt-row">
+            <span>Cuenta Origen:</span>
+            <strong style="color: white; font-family: monospace;" th:text="${sourceIban}">ES21...</strong>
+        </div>
+        <div class="receipt-row">
+            <span>Beneficiario (IBAN):</span>
+            <strong style="color: white; font-family: monospace;" th:text="${destinationIban}">ES98...</strong>
+        </div>
+        <div class="receipt-row">
+            <span>Email Beneficiario:</span>
+            <strong style="color: white;" th:text="${destinationEmail}">ejemplo@correo.com</strong>
+        </div>
+        <div class="receipt-row">
+            <span>Concepto:</span>
+            <strong style="color: white;" th:text="${concept}">Alquiler</strong>
+        </div>
+        <div class="receipt-row">
+            <span>Comisión Bancaria:</span>
+            <strong style="color: #fbbf24;" th:text="${fee + ' €'}">0.00 €</strong>
+        </div>
+        <div class="receipt-row">
+            <span>Canal de Liquidación:</span>
+            <strong style="color: #00f2fe;" th:text="${type}">SEPA</strong>
+        </div>
+    </div>
+
+    <div class="footer">
+        © 2026 BankSphere S.A. | Comprobante digital certificado.<br>
+        Conservar este recibo como documento de auditoría legal.
+    </div>
+</div>
+</body>
+</html>

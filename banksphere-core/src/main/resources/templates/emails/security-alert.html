@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #08090d; color: #f3f4f6; padding: 40px 0; margin: 0; }
+        .container { max-width: 600px; margin: 0 auto; background: #11141d; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 20px; padding: 45px; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: #f87171; text-align: center; margin-bottom: 25px; }
+        .badge-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); padding: 8px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: inline-block; text-align: center; margin: 0 auto 25px auto; }
+        .warning-box { background: rgba(239, 68, 68, 0.04); border-left: 4px solid #ef4444; border-radius: 8px; padding: 20px; margin-bottom: 25px; }
+        .warning-title { font-weight: bold; color: #f87171; margin-bottom: 8px; font-size: 0.95rem; }
+        .warning-text { font-size: 0.88rem; color: #9ca3af; line-height: 1.5; }
+        .footer { text-align: center; font-size: 0.75rem; color: #4b5563; margin-top: 40px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="logo">⚠️ ALERTA DE SEGURIDAD CRÍTICA</div>
+    <div style="text-align: center;">
+        <span class="badge-danger">BLOQUEO PREVENTIVO ACTIVADO</span>
+    </div>
+
+    <p>Estimado/a <strong th:text="${clientName}">Javier Gómez</strong>,</p>
+
+    <p>Le notificamos de manera oficial que nuestro sistema de inteligencia artificial y prevención de blanqueo de capitales (**Módulo AML / KYC**) ha detectado anomalías de riesgo alto en la actividad transaccional de su cuenta.</p>
+
+    <div class="warning-box">
+        <div class="warning-title">Motivo de la Intercepción:</div>
+        <div class="warning-text" th:text="${reason}">Vulneración de la regla de frecuencia operativa.</div>
+    </div>
+
+    <p>Como medida de ciberseguridad preventiva e inmediata, **su cuenta con IBAN <span th:text="${iban}" style="font-family: monospace; color: white;">ES...</span> ha sido suspendida temporalmente**. Sus accesos han sido restringidos a modo de <em>Sólo Lectura</em> y todas las transferencias salientes han sido congeladas para proteger sus fondos.</p>
+
+    <p><strong>¿Cómo solucionar esta alerta?</strong><br> Un analista financiero de BankSphere está revisando el expediente. Para agilizar el desbloqueo, póngase en contacto inmediato abriendo nuestro chat de soporte técnico en vivo dentro de la plataforma web.</p>
+
+    <div class="footer">
+        © 2026 Departamento de Prevención de Fraude | BankSphere S.A.<br>
+        Este correo es una notificación obligatoria de ciberseguridad financiera.
+    </div>
+</div>
+</body>
+</html>
