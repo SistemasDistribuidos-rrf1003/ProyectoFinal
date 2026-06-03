@@ -2,31 +2,27 @@ package com.banksphere.core.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
-import java.io.IOException;
 import java.util.Collection;
 
-/**
- * Configuración de seguridad global para la aplicación BankSphere.
- * Implementa cifrado BCrypt, control de accesos basados en roles,
- * protección CSRF inteligente y direccionamiento dinámico tras autenticación exitosa.
- */
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // Permite seguridad declarativa con @PreAuthorize / @Secured en controladores
+@EnableMethodSecurity
 public class SecurityConfig {
 
     /**
-     * Definición del Bean de cifrado de contraseñas.
-     * Utiliza el algoritmo BCrypt con fuerza de ronda estándar (10).
+     * Definición del Bean de cifrado de contraseñas (BCrypt).
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -34,39 +30,67 @@ public class SecurityConfig {
     }
 
     /**
-     * Configuración del pipeline de filtros de seguridad (Security Filter Chain).
+     * =========================================================================
+     * CADENA DE FILTROS 1: API REST DE OPEN BANKING (STATELESS + BASIC AUTH)
+     * =========================================================================
+     * Se activa únicamente para peticiones que comiencen con el prefijo /api/v1/openbanking/
      */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    @Order(1) // Máxima prioridad de evaluación
+    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Protección contra ataques CSRF (Cross-Site Request Forgery)
-                .csrf(csrf -> csrf
-                        // Excluimos endpoints API (REST Open Banking) ya que se protegerán mediante tokens/API Keys
-                        .ignoringRequestMatchers("/api/v1/openbanking/**", "/h2-console/**")
+                .securityMatcher("/api/v1/openbanking/**") // Aplica solo a la API
+
+                // 1. Deshabilitamos CSRF ya que es una API Stateless protegida por credenciales en cada request
+                .csrf(csrf -> csrf.disable())
+
+                // 2. Forzamos políticas de sesión sin estado (Stateless) para que no guarde cookies de sesión
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // 2. Control y autorización de peticiones HTTP
+                // 3. Reglas de Autorización de la API
                 .authorizeHttpRequests(auth -> auth
-                        // Rutas públicas y recursos estáticos sin necesidad de sesión
-                        .requestMatchers("/", "/landing", "/login", "/register", "/css/**", "/js/**", "/assets/**", "/webjars/**").permitAll()
-
-                        // Habilitación de consola H2 si se usa para pruebas
-                        .requestMatchers("/h2-console/**").permitAll()
-
-                        // Rutas exclusivas para el rol ADMINISTRADOR (Gestión de usuarios y sistema)
-                        .requestMatchers("/users/**", "/admin/**").hasRole("ADMIN")
-
-                        // Rutas exclusivas para el rol ANALISTA FINANCIERO (Prevención de fraude, KYC y AML)
-                        .requestMatchers("/analyst/**", "/antifraud/**").hasRole("ANALYST")
-
-                        // Rutas exclusivas para el rol CLIENTE / USUARIO NORMAL (Operaciones bancarias y balance)
-                        .requestMatchers("/dashboard/**", "/accounts/**", "/transfers/**").hasRole("USER")
-
-                        // Cualquier otra petición debe estar autenticada
+                        // Todos los endpoints de Open Banking requieren autenticación básica previa
                         .anyRequest().authenticated()
                 )
 
-                // 3. Configuración de página de Login personalizada
+                // 4. Habilitamos HTTP Basic Authentication para aplicaciones clientes de terceros
+                .httpBasic(Customizer.withDefaults());
+
+        return http.build();
+    }
+
+    /**
+     * =========================================================================
+     * CADENA DE FILTROS 2: VISTAS THYMELEAF (STATEFUL + COOKIES + FORM LOGIN)
+     * =========================================================================
+     * Actúa como fallback para gestionar la seguridad visual y de sesión del usuario
+     */
+    @Bean
+    @Order(2)
+    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                // 1. Protección CSRF obligatoria para vistas web
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/h2-console/**")
+                )
+
+                // 2. Reglas de Autorización para vistas y recursos
+                .authorizeHttpRequests(auth -> auth
+                        // Recursos públicos
+                        .requestMatchers("/", "/landing", "/login", "/register", "/css/**", "/js/**", "/assets/**", "/webjars/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
+
+                        // Control de Accesos por Roles en la interfaz gráfica
+                        .requestMatchers("/users/**", "/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/analyst/**", "/antifraud/**").hasRole("ANALYST")
+                        .requestMatchers("/dashboard/**", "/accounts/**", "/transfers/**").hasRole("USER")
+
+                        .anyRequest().authenticated()
+                )
+
+                // 3. Login por formulario personalizado
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
@@ -75,7 +99,7 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-                // 4. Configuración del proceso de Logout (Cierre de sesión)
+                // 4. Logout seguro
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout=true")
@@ -85,7 +109,7 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-                // 5. Configuración para evitar problemas de renderizado en IFRAMEs (Consola H2)
+                // 5. Configuración específica para habilitar la Consola H2 local en iFrames
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin())
                 );
@@ -94,18 +118,12 @@ public class SecurityConfig {
     }
 
     /**
-     * Manejador de éxito personalizado (Success Handler) que redirige al usuario a su
-     * módulo correspondiente dependiendo del rol con el que inicie sesión.
-     *
-     * - Si es ADMIN -> Se le redirige al listado CRUD de gestión de usuarios (`/users`)
-     * - Si es ANALYST -> Se le redirige al panel de control de alertas y fraudes (`/analyst/dashboard`)
-     * - Si es USER (Cliente) -> Se le redirige a su panel financiero personal (`/dashboard`)
+     * Manejador de éxito que redirecciona al usuario según su Rol al iniciar sesión en la Web.
      */
     @Bean
     public AuthenticationSuccessHandler customAuthenticationSuccessHandler() {
         return (request, response, authentication) -> {
             Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-
             String redirectUrl = "/dashboard";
 
             for (GrantedAuthority authority : authorities) {
@@ -121,7 +139,6 @@ public class SecurityConfig {
                     break;
                 }
             }
-
             response.sendRedirect(redirectUrl);
         };
     }

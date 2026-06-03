@@ -93,7 +93,7 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
-            fieldErrors.put(fieldName, errorMessage); 
+            fieldErrors.put(fieldName, errorMessage);
         });
 
         Map<String, Object> responseBody = new HashMap<>();
