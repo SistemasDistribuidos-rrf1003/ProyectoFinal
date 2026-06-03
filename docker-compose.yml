@@ -60,6 +60,47 @@ services:
     networks:
       - banksphere-network
 
+  banksphere-core:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: core # Apunta al STAGE 2
+    container_name: banksphere-core
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres-db
+      - rabbitmq
+    networks:
+      - banksphere-network
+
+  banksphere-antifraud:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: antifraud # Apunta al STAGE 3
+    container_name: banksphere-antifraud
+    ports:
+      - "8082:8082"
+    depends_on:
+      - rabbitmq
+    networks:
+      - banksphere-network
+
+  banksphere-notifications:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: notifications # Apunta al STAGE 4
+    container_name: banksphere-notifications
+    ports:
+      - "8083:8083"
+    depends_on:
+      - rabbitmq
+      - mailpit
+    networks:
+      - banksphere-network
+
 # Red virtual aislada para la comunicación interna entre contenedores
 networks:
   banksphere-network:
