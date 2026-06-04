@@ -136,4 +136,13 @@ public class UserService implements UserDetailsService {
         User user = getUserById(id);
         userRepository.delete(user);
     }
+
+    /**
+     * Recupera un usuario de la base de datos buscando por su dirección de correo electrónico.
+     */
+    @Transactional(readOnly = true)
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
+    }
 }

@@ -1,0 +1,48 @@
+# =============================================================================
+#     BANKSphere Core Service - CONFIGURACIÓN DE PROPIEDADES (YAML)
+# =============================================================================
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: banksphere-core
+
+  # 1. Configuración de Conexión a la Base de Datos PostgreSQL
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:banksphere_db}
+    username: ${DB_USER:admin}
+    password: ${DB_PASSWORD:secretpassword}
+    driver-class-name: org.postgresql.Driver
+
+  # 2. Configuración de JPA & Hibernate
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # 3. Configuración de Conexión al Message Broker (RabbitMQ)
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    port: ${RABBIT_PORT:5672}
+    username: ${RABBIT_USER:guest}
+    password: ${RABBIT_PASS:guest}
+
+  # 4. Configuración de renderizado de Thymeleaf
+  thymeleaf:
+    cache: false
+    mode: HTML
+    encoding: UTF-8
+
+# 5. Configuración de niveles de log
+logging:
+  level:
+    root: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+    com.banksphere.core: DEBUG

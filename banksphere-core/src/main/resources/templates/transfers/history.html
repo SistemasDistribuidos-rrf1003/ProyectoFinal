@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Movimientos - BankSphere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/variables.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+<body>
+<div class="app-layout">
+    <!-- Sidebar -->
+    <aside th:replace="~{fragments/sidebar :: sidebar('transfers')}"></aside>
+
+    <!-- Contenido -->
+    <main class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <div>
+                <h1 class="font-family-outfit fw-bold h2 mb-1">Historial de Transferencias</h1>
+                <p class="text-muted small mb-0">Listado consolidado de todas tus transferencias nacionales e internacionales.</p>
+            </div>
+            <div>
+                <a href="/transfers/new" class="btn btn-add">
+                    <i class="bi bi-send-plus-fill me-2"></i> Emitir Transferencia
+                </a>
+            </div>
+        </div>
+
+        <div class="glass-card p-4">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover table-borderless align-middle mb-0">
+                    <thead>
+                    <tr class="text-muted border-bottom border-secondary border-opacity-10" style="font-size: 0.85rem;">
+                        <th>Fecha y Hora</th>
+                        <th>Origen (IBAN)</th>
+                        <th>Destino (IBAN)</th>
+                        <th>Concepto</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th class="text-end">Importe</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="mov : ${movements}" class="border-bottom border-secondary border-opacity-5">
+                        <td class="small" th:text="${#temporals.format(mov.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 12:00</td>
+                        <td class="font-monospace small" th:text="${mov.sourceAccount.iban}">ES21...</td>
+                        <td class="font-monospace small" th:text="${mov.destinationAccount.iban}">ES30...</td>
+                        <td class="small" th:text="${mov.concept}">Concepto</td>
+                        <td>
+                            <span class="badge rounded-pill bg-dark text-info border border-info border-opacity-25" th:text="${mov.transferType}">SEPA</span>
+                        </td>
+                        <td>
+                                <span class="badge rounded-pill"
+                                      th:classappend="${mov.status.name() == 'COMPLETED' ? 'bg-success bg-opacity-10 text-success' : 'bg-warning bg-opacity-10 text-warning'}"
+                                      th:text="${mov.status}">COMPLETED</span>
+                        </td>
+                        <td class="text-end fw-semibold"
+                            th:classappend="${#authentication.name == mov.sourceAccount.user.email ? 'text-danger' : 'text-success'}"
+                            th:text="${(#authentication.name == mov.sourceAccount.user.email ? '-' : '+') + #numbers.formatDecimal(mov.amount, 1, 'POINT', 2, 'COMMA') + ' €'}">
+                            0,00 €
+                        </td>
+                    </tr>
+                    <tr th:if="${movements.isEmpty()}">
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-wallet2 fs-2 d-block mb-3"></i>
+                            No se registran transferencias ni movimientos financieros asociados.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

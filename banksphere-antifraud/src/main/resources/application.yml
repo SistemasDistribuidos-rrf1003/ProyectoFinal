@@ -3,27 +3,41 @@
 # =============================================================================
 
 server:
-  port: 8082  # Puerto único de escucha para analistas y alertas de riesgo
+  port: 8082
 
 spring:
   application:
     name: banksphere-antifraud
 
-  # 1. Configuración de Conexión al Message Broker de RabbitMQ
+  # 1. Configuración de Conexión a la Base de Datos PostgreSQL (Compartida o dedicada)
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:banksphere_db}
+    username: ${DB_USER:admin}
+    password: ${DB_PASSWORD:secretpassword}
+    driver-class-name: org.postgresql.Driver
+
+  # 2. Configuración de JPA & Hibernate
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  # 3. Configuración de Conexión al Message Broker de RabbitMQ
   rabbitmq:
-    host: localhost   # [Pro-Tip]: Usar 'localhost' para desarrollo local o 'rabbitmq' si corres la App dentro de Docker
-    port: 5672
-    username: guest
-    password: guest
+    host: ${RABBIT_HOST:localhost}
+    port: ${RABBIT_PORT:5672}
+    username: ${RABBIT_USER:guest}
+    password: ${RABBIT_PASS:guest}
     listener:
       simple:
-        concurrency: 1         # Consumidor inicial concurrente activo
-        max-concurrency: 3     # Escalabilidad máxima bajo picos de transferencias
-        acknowledge-mode: auto # Confirmación automática de mensajes procesados
+        concurrency: 1
+        max-concurrency: 3
+        acknowledge-mode: auto
 
-# 2. Configuración de Niveles de Logs
+# 4. Configuración de Niveles de Logs
 logging:
   level:
     root: INFO
     org.springframework.amqp: INFO
-    com.banksphere.antifraud: DEBUG # Habilita logs detallados para auditar el análisis de fraude en tiempo real
+    com.banksphere.antifraud: DEBUG

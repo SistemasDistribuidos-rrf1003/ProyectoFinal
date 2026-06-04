@@ -3,7 +3,7 @@
 # =============================================================================
 
 server:
-  port: 8083  # Puerto único de escucha para la conexión de WebSockets
+  port: 8083
 
 spring:
   application:
@@ -11,29 +11,28 @@ spring:
 
   # 1. Configuración de Conexión al Message Broker de RabbitMQ
   rabbitmq:
-    host: localhost   # Cambiar a 'rabbitmq' al empaquetar con docker-compose
+    host: ${RABBIT_HOST:localhost}
     port: 5672
-    username: guest
-    password: guest
+    username: ${RABBIT_USER:guest}
+    password: ${RABBIT_PASS:guest}
 
   # 2. Configuración de Spring Mail (SMTP Sandbox - Mailpit)
   mail:
-    host: localhost   # Cambiar a 'mailpit' al empaquetar con docker-compose
-    port: 1025        # Puerto SMTP sin autenticación de Mailpit
+    host: ${MAIL_HOST:localhost}
+    port: 1025
     properties:
       mail:
         smtp:
           auth: false
-          connectiontimeout: 5000 # Tiempo máximo de espera para establecer conexión (5 segundos)
-          timeout: 5000           # Tiempo máximo de lectura
+          connectiontimeout: 5000
+          timeout: 5000
           write-timeout: 5000
           starttls:
-            enable: false         # Desactivamos cifrado TLS requerido para servidores reales (Gmail/Outlook)
-
+            enable: false
 
 # 3. Configuración de Logs
 logging:
   level:
     root: INFO
     org.springframework.amqp: INFO
-    com.banksphere.notifications: DEBUG # Monitorea el envío de mails y empujes de WebSockets
+    com.banksphere.notifications: DEBUG

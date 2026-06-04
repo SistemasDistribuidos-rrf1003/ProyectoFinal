@@ -16,7 +16,7 @@ services:
       # Persistencia de datos en volumen de docker
       - postgres_data:/var/lib/postgresql/data
       # Script inicial opcional para inyectar esquema o datos de prueba automáticamente
-      - ./databases/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./databases:/docker-entrypoint-initdb.d
     networks:
       - banksphere-network
 
@@ -60,14 +60,18 @@ services:
     networks:
       - banksphere-network
 
+    # Fragmento modificado para los tres microservicios en docker-compose.yml:
+
   banksphere-core:
     build:
       context: .
       dockerfile: Dockerfile
-      target: core # Apunta al STAGE 2
+      target: core
     container_name: banksphere-core
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     depends_on:
       - postgres-db
       - rabbitmq
@@ -78,12 +82,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: antifraud # Apunta al STAGE 3
+      target: antifraud
     container_name: banksphere-antifraud
     ports:
       - "8082:8082"
+    env_file:
+      - .env
     depends_on:
       - rabbitmq
+      - postgres-db
     networks:
       - banksphere-network
 
@@ -91,10 +98,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: notifications # Apunta al STAGE 4
+      target: notifications
     container_name: banksphere-notifications
     ports:
       - "8083:8083"
+    env_file:
+      - .env
     depends_on:
       - rabbitmq
       - mailpit
