@@ -39,16 +39,22 @@ public class UserService implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        System.out.println(">>> [DEBUG-LOGIN] Intentando cargar email: " + email);
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con el email: " + email));
+
+        System.out.println(">>> [DEBUG-LOGIN] Datos recuperados: Email=" + user.getEmail()
+                + " | Estado=" + user.getStatus()
+                + " | Rol=" + user.getRole()
+                + " | Hash=" + user.getPassword());
 
         // Mapeo del rol de la entidad (ADMIN, USER, ANALYST) al formato de Spring Security (ROLE_ADMIN, etc.)
         SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
 
         // Control de estado de la cuenta del usuario para la sesión de seguridad
-        boolean enabled = (user.getStatus() == User.UserStatus.ACTIVE);
+        boolean enabled = (user.getStatus() == User.UserStatus.ACTIVE || user.getStatus() == User.UserStatus.PENDING_KYC);
         boolean accountNonLocked = (user.getStatus() != User.UserStatus.SUSPENDED);
-
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),

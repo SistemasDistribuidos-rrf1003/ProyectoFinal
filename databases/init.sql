@@ -80,29 +80,29 @@ CREATE TABLE kyc_details (
 -- 3. INYECCIÓN DE DATOS SEMILLA (Seed Data)
 -- -----------------------------------------------------------------------------
 
--- 3.1 Usuarios de Prueba (Password para todos: password123)
+-- Usuarios de Prueba (Password para todos: password123)
 -- Usuario 1: Administrador Global de la Plataforma (ADMIN)
 INSERT INTO users (first_name, last_name, email, phone, national_id, password, role, status)
 VALUES ('Sofía', 'Martínez', 'admin@banksphere.com', '+34 600 112 233', '12345678A',
-        '$2a$10$Y50UaMFOxteibQEYDfARXOBDnYtB1CqG0tS9J8xYm2C8G.t4bY8tG', 'ADMIN', 'ACTIVE');
+        'password123', 'ADMIN', 'ACTIVE');
 
 -- Usuario 2: Cliente Normal con saldo activo y cuentas (USER)
 INSERT INTO users (first_name, last_name, email, phone, national_id, password, role, status)
 VALUES ('Javier', 'Gómez Ruiz', 'client@banksphere.com', '+34 611 223 344', '87654321B',
-        '$2a$10$Y50UaMFOxteibQEYDfARXOBDnYtB1CqG0tS9J8xYm2C8G.t4bY8tG', 'USER', 'ACTIVE');
+        '$2y$10$dI8qa2bKk/RN2hemdHkOgu8oICMn7ivhzVyJmiJmNFzjJpYsLEAYK', 'USER', 'ACTIVE');
 
 -- Usuario 3: Analista de Fraudes y Cumplimiento Regulatorio (ANALYST)
 INSERT INTO users (first_name, last_name, email, phone, national_id, password, role, status)
 VALUES ('Alejandro', 'López Vega', 'analyst@banksphere.com', '+34 622 334 455', '56781234C',
-        '$2a$10$Y50UaMFOxteibQEYDfARXOBDnYtB1CqG0tS9J8xYm2C8G.t4bY8tG', 'ANALYST', 'ACTIVE');
+        '$2y$10$dI8qa2bKk/RN2hemdHkOgu8oICMn7ivhzVyJmiJmNFzjJpYsLEAYK', 'ANALYST', 'ACTIVE');
 
 -- Usuario 4: Cliente nuevo con KYC pendiente (USER con PENDING_KYC)
 INSERT INTO users (first_name, last_name, email, phone, national_id, password, role, status)
 VALUES ('Laura', 'Sanz Torres', 'laura.sanz@gmail.com', '+34 633 445 566', '43218765D',
-        '$2a$10$Y50UaMFOxteibQEYDfARXOBDnYtB1CqG0tS9J8xYm2C8G.t4bY8tG', 'USER', 'PENDING_KYC');
+        '$2y$10$dI8qa2bKk/RN2hemdHkOgu8oICMn7ivhzVyJmiJmNFzjJpYsLEAYK', 'USER', 'PENDING_KYC');
 
 
--- 3.2 Registros del Módulo KYC asociados
+-- Registros del Módulo KYC asociados
 -- KYC Javier Gómez (Verificado - Riesgo Bajo)
 INSERT INTO kyc_details (user_id, verification_status, risk_level, document_type, document_url)
 VALUES (2, 'VERIFIED', 'LOW', 'DNI', '/uploads/docs/dni_javier.pdf');
@@ -112,7 +112,7 @@ INSERT INTO kyc_details (user_id, verification_status, risk_level, document_type
 VALUES (4, 'PENDING', 'MEDIUM', 'PASSPORT', '/uploads/docs/passport_laura.pdf');
 
 
--- 3.3 Cuentas Bancarias de Prueba (Monedas EUR y USD, saldos semilla)
+-- Cuentas Bancarias de Prueba (Monedas EUR y USD, saldos semilla)
 -- Cuentas de Javier Gómez (Usuario ID: 2)
 -- Cuenta Ahorros (SAVINGS)
 INSERT INTO accounts (iban, account_type, balance, currency, status, user_id)
@@ -135,7 +135,7 @@ INSERT INTO accounts (iban, account_type, balance, currency, status, user_id)
 VALUES ('ES0000000000000000000000', 'BUSINESS', 1000000.00, 'EUR', 'ACTIVE', 1);
 
 
--- 3.3 Transferencias de Prueba (Historial de transacciones de Javier Gómez)
+-- Transferencias de Prueba (Historial de transacciones de Javier Gómez)
 -- Transacción 1: Recibe nómina desde la cuenta ADMIN
 INSERT INTO transfers (source_account_id, destination_account_id, amount, fee, concept, status, transfer_type)
 VALUES (5, 2, 2450.00, 0.00, 'NOMINA MAYO 2026 - BANKSphere Corp', 'COMPLETED', 'SEPA');

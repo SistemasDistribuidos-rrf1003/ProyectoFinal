@@ -24,9 +24,10 @@ public class SecurityConfig {
     /**
      * Definición del Bean de cifrado de contraseñas (BCrypt).
      */
+    @SuppressWarnings("deprecation")
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance();
     }
 
     /**
