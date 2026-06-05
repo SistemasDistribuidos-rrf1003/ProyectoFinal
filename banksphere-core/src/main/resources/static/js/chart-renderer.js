@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
                 datasets: [{
                     label: 'Saldo Disponible (€)',
-                    data: [18500, 21000, 19500, 24800, 22200, 29850],
+                    data: window.dashboardData ? window.dashboardData.historicalBalance : [0, 0, 0, 0, 0, 0],
                     borderColor: primaryNeon,
                     backgroundColor: gradientFill,
                     borderWidth: 3,
@@ -102,7 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
             data: {
                 labels: ['Alquiler', 'Ocio/Restauración', 'Suscripciones', 'Compras', 'Viajes'],
                 datasets: [{
-                    data: [850, 340, 120, 480, 290], // Importes de simulación
+                    data: window.dashboardData ? window.dashboardData.expenses : [0, 0, 0, 0, 0],
                     backgroundColor: [
                         accentPurple,
                         primaryBlue,
@@ -148,14 +148,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 datasets: [
                     {
                         label: 'Ingresos (€)',
-                        data: [4200, 5800, 3900, 6200],
+                        data: window.dashboardData ? window.dashboardData.incomeVsExpenses.income : [0, 0, 0, 0],
                         backgroundColor: incomeColor,
-                        borderRadius: 6, // Esquinas de las barras redondeadas
+                        borderRadius: 6, 
                         borderWidth: 0
                     },
                     {
                         label: 'Gastos (€)',
-                        data: [3100, 4500, 2800, 4900],
+                        data: window.dashboardData ? window.dashboardData.incomeVsExpenses.expenses : [0, 0, 0, 0],
                         backgroundColor: expenseColor,
                         borderRadius: 6,
                         borderWidth: 0

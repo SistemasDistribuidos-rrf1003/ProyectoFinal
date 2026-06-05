@@ -89,7 +89,7 @@ VALUES ('Sofía', 'Martínez', 'admin@banksphere.com', '+34 600 112 233', '12345
 -- Usuario 2: Cliente Normal con saldo activo y cuentas (USER)
 INSERT INTO users (first_name, last_name, email, phone, national_id, password, role, status)
 VALUES ('Javier', 'Gómez Ruiz', 'client@banksphere.com', '+34 611 223 344', '87654321B',
-        '$2y$10$dI8qa2bKk/RN2hemdHkOgu8oICMn7ivhzVyJmiJmNFzjJpYsLEAYK', 'USER', 'ACTIVE');
+        'password123', 'USER', 'ACTIVE');
 
 -- Usuario 3: Analista de Fraudes y Cumplimiento Regulatorio (ANALYST)
 INSERT INTO users (first_name, last_name, email, phone, national_id, password, role, status)
@@ -98,8 +98,8 @@ VALUES ('Alejandro', 'López Vega', 'analyst@banksphere.com', '+34 622 334 455',
 
 -- Usuario 4: Cliente nuevo con KYC pendiente (USER con PENDING_KYC)
 INSERT INTO users (first_name, last_name, email, phone, national_id, password, role, status)
-VALUES ('Laura', 'Sanz Torres', 'laura.sanz@gmail.com', '+34 633 445 566', '43218765D',
-        '$2y$10$dI8qa2bKk/RN2hemdHkOgu8oICMn7ivhzVyJmiJmNFzjJpYsLEAYK', 'USER', 'PENDING_KYC');
+VALUES ('Laura', 'Sanz Torres', 'client2@banksphere.com', '+34 633 445 566', '43218765D',
+        'password123', 'USER', 'ACTIVE');
 
 
 -- Registros del Módulo KYC asociados
@@ -116,11 +116,11 @@ VALUES (4, 'PENDING', 'MEDIUM', 'PASSPORT', '/uploads/docs/passport_laura.pdf');
 -- Cuentas de Javier Gómez (Usuario ID: 2)
 -- Cuenta Ahorros (SAVINGS)
 INSERT INTO accounts (iban, account_type, balance, currency, status, user_id)
-VALUES ('ES2114650100991234567890', 'SAVINGS', 45250.75, 'EUR', 'ACTIVE', 2);
+VALUES ('ES16 2080 7820 3470 7298 6894', 'SAVINGS', 45250.75, 'EUR', 'ACTIVE', 2);
 
 -- Cuenta Corriente (CHECKING)
 INSERT INTO accounts (iban, account_type, balance, currency, status, user_id)
-VALUES ('ES9814650100990987654321', 'CHECKING', 3890.10, 'EUR', 'ACTIVE', 2);
+VALUES ('ES84 2048 9680 9389 9335 8582', 'CHECKING', 3890.10, 'EUR', 'ACTIVE', 2);
 
 -- Cuenta Business en Dólares (BUSINESS / USD)
 INSERT INTO accounts (iban, account_type, balance, currency, status, user_id)
@@ -128,7 +128,7 @@ VALUES ('US1214650100994567890123', 'BUSINESS', 12500.00, 'USD', 'ACTIVE', 2);
 
 -- Cuenta de Laura Sanz (Usuario ID: 4) - Saldo bajo inicial
 INSERT INTO accounts (iban, account_type, balance, currency, status, user_id)
-VALUES ('ES4514650100998888888888', 'CHECKING', 150.00, 'EUR', 'ACTIVE', 4);
+VALUES ('ES37 0049 0586 4581 8699 7903', 'CHECKING', 150.00, 'EUR', 'ACTIVE', 4);
 
 -- Cuenta fantasma para simulaciones de pagos externos controlada por la administración
 INSERT INTO accounts (iban, account_type, balance, currency, status, user_id)

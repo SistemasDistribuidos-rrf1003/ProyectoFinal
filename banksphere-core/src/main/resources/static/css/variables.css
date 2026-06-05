@@ -8,14 +8,14 @@
     --bg-sat: 12%;
 
     /* Nombres de Variables Antiguos con Valores de HSL Mejorados */
-    --bg-color: hsl(var(--bg-hue), var(--bg-sat), 6%);         /* #0a0b0e */
-    --sidebar-bg: hsl(var(--bg-hue), var(--bg-sat), 10%);      /* #101217 */
-    --card-bg: hsla(var(--bg-hue), var(--bg-sat), 16%, 0.45);  /* Vidrio esmerilado */
-    --input-bg: hsla(var(--bg-hue), var(--bg-sat), 8%, 0.8);   /* Fondo inputs */
+    --bg-color: hsl(var(--bg-hue), var(--bg-sat), 6%); /* #0a0b0e */
+    --sidebar-bg: hsl(var(--bg-hue), var(--bg-sat), 10%); /* #101217 */
+    --card-bg: hsla(var(--bg-hue), var(--bg-sat), 16%, 0.45); /* Vidrio esmerilado */
+    --input-bg: hsla(var(--bg-hue), var(--bg-sat), 8%, 0.8); /* Fondo inputs */
 
     /* Colores de Texto */
-    --text-color: hsl(var(--bg-hue), 100%, 96%);               /* Blanco suave */
-    --text-muted: hsl(var(--bg-hue), 8%, 62%);                 /* Gris pizarra */
+    --text-color: hsl(var(--bg-hue), 100%, 96%); /* Blanco suave */
+    --text-muted: hsl(var(--bg-hue), 8%, 62%); /* Gris pizarra */
     --text-dark: #08090d;
 
     /* 2. Colores Neón e Identidad */
@@ -28,9 +28,9 @@
     --accent-grad: linear-gradient(135deg, #b15cff 0%, #5c53ff 100%);
 
     /* 3. Estados Financieros */
-    --income-color: hsl(150, 65%, 52%);    /* Verde Esmeralda */
-    --expense-color: hsl(355, 90%, 70%);   /* Rojo Coral */
-    --warning-color: hsl(42, 98%, 56%);    /* Oro Cálido */
+    --income-color: hsl(150, 65%, 52%); /* Verde Esmeralda */
+    --expense-color: hsl(355, 90%, 70%); /* Rojo Coral */
+    --warning-color: hsl(42, 98%, 56%); /* Oro Cálido */
 
     /* 4. Bordes y Sombras Glassmorphism */
     --border-color: rgba(255, 255, 255, 0.05);
@@ -54,25 +54,22 @@
     --border-radius-sm: 12px;
 
     --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
-    /*  6. PALETA DE MODO CLARO (LIGHT MODE) */
-    .light-mode {
-        --bg-color: #f8fafc;          /* Gris azulado ultra-claro (Slate 50) */
-        --sidebar-bg: #ffffff;        /* Barra lateral blanca pura */
-        --card-bg: rgba(255, 255, 255, 0.75); /* Cristal esmerilado blanco */
-        --input-bg: #f1f5f9;          /* Fondo de inputs gris claro */
-
-        /* Colores de Texto */
-        --text-color: #0f172a;        /* Azul pizarra oscuro (Slate 900) */
-        --text-muted: #64748b;        /* Gris pizarra intermedio (Slate 500) */
-
-        /* Bordes y Sombras Claras */
-        --border-color: rgba(15, 23, 42, 0.08);
-        --border-hover: rgba(15, 23, 42, 0.16);
-        --card-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
-
-        /* Adaptación de gráficos en modo claro (opcional) */
-        --primary-neon: #0284c7;      /* Azul cielo de alta visibilidad */
-        --primary-blue: #0369a1;
-    }
+/*  6. PALETA DE MODO CLARO (LIGHT MODE) */
+:root.light-mode {
+    --bg-color: #f8fafc;          /* Gris azulado ultra-claro (Slate 50) */
+    --sidebar-bg: #ffffff;        /* Barra lateral blanca pura */
+    --card-bg: rgba(255, 255, 255, 0.75); /* Cristal esmerilado blanco */
+    --input-bg: #f1f5f9;          /* Fondo de inputs gris claro */
+    /* Colores de Texto */
+    --text-color: #0f172a;        /* Azul pizarra oscuro (Slate 900) */
+    --text-muted: #64748b;        /* Gris pizarra intermedio (Slate 500) */
+    /* Bordes y Sombras Claras */
+    --border-color: rgba(15, 23, 42, 0.08);
+    --border-hover: rgba(15, 23, 42, 0.16);
+    --card-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+    /* Adaptación de gráficos en modo claro (opcional) */
+    --primary-neon: #0284c7;      /* Azul cielo de alta visibilidad */
+    --primary-blue: #0369a1;
 }

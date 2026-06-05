@@ -13,10 +13,14 @@ body {
     color: var(--text-color);
     min-height: 100vh;
     display: flex;
-    align-items: center;
+    /* Cambiamos el centrado estricto por un padding para que no se corte por arriba */
+    align-items: flex-start;
     justify-content: center;
+    padding: 40px 20px;
     position: relative;
-    overflow: hidden;
+    /* Permitimos el scroll vertical pero ocultamos el horizontal para que las animaciones no molesten */
+    overflow-y: auto;
+    overflow-x: hidden;
     margin: 0;
 }
 

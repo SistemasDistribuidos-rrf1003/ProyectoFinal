@@ -77,7 +77,7 @@ public class TransferController {
         try {
             transferService.executeTransfer(sourceIban, destinationIban, amount, transferType, concept);
             redirectAttributes.addFlashAttribute("success", "Transferencia emitida con éxito. Los fondos han sido debitados y enviados a la red.");
-            return "redirect:/accounts";
+            return "redirect:/transfers";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error en la transacción: " + e.getMessage());
             return "redirect:/transfers/new?source=" + sourceIban;

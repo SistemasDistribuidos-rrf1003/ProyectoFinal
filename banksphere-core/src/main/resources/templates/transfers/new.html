@@ -13,39 +13,15 @@
     <!-- CSS del Sistema de Diseño Premium -->
     <link rel="stylesheet" th:href="@{/css/variables.css}">
     <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <script th:src="@{/js/theme-manager.js}"></script>
+
 
 </head>
 <body>
 
 <div class="app-layout">
     <!-- Sidebar Navigation -->
-    <aside class="sidebar">
-        <div class="brand-logo">
-            <i class="bi bi-globe2"></i> BankSphere
-        </div>
-        <ul class="nav-menu">
-            <li class="nav-item">
-                <a href="/dashboard"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
-            </li>
-            <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                <a href="/users"><i class="bi bi-people-fill"></i> Clientes (CRUD)</a>
-            </li>
-            <li class="nav-item">
-                <a href="/accounts"><i class="bi bi-credit-card-2-front-fill"></i> Cuentas</a>
-            </li>
-            <li class="nav-item active">
-                <a href="/transfers"><i class="bi bi-arrow-left-right"></i> Transferencias</a>
-            </li>
-            <li class="nav-item">
-                <a href="/analyst/dashboard"><i class="bi bi-shield-fill-exclamation"></i> Motor AML/KYC</a>
-            </li>
-        </ul>
-        <div class="mt-auto">
-            <a href="/logout" class="btn btn-outline-danger w-100 border-0 rounded-3 text-start py-2">
-                <i class="bi bi-box-arrow-left me-2"></i> Cerrar Sesión
-            </a>
-        </div>
-    </aside>
+    <aside th:replace="~{fragments/sidebar :: sidebar('transfers')}"></aside>
 
     <!-- Main Workspace -->
     <main class="main-content">
@@ -77,6 +53,12 @@
                 </div>
             </div>
 
+            <!-- Alertas Visuales del Servidor -->
+            <div th:if="${error}" class="alert alert-danger border-0 rounded-4 p-3 mb-4 d-flex align-items-center" style="background: rgba(239, 68, 68, 0.15); color: #f87171;">
+                <i class="bi bi-exclamation-octagon-fill fs-5 me-3"></i>
+                <span th:text="${error}"></span>
+            </div>
+            
             <!-- Formulario de Transferencias -->
             <form th:action="@{/transfers/new}" method="POST" id="transfer-form">
 
@@ -123,7 +105,7 @@
                         <div class="col-md-12 mb-3">
                             <label for="destinationIban" class="form-label">IBAN del Beneficiario</label>
                             <div class="input-group-custom">
-                                <i class="bi bi-bank"></i>
+                                <i id="iban-icon" class="bi bi-bank" style="transition: 0.3s;"></i>
                                 <input type="text" id="destinationIban" name="destinationIban" class="form-control-custom" placeholder="ESXX 0000 0000 0000 0000 0000" required>
                             </div>
                         </div>
@@ -138,6 +120,8 @@
                                 <!-- Validación en tiempo real -->
                                 <input type="number" id="amount" name="amount" class="form-control-custom" placeholder="0.00" min="0.01" step="0.01" required>
                             </div>
+                            <!-- Nuevo elemento para mostrar el saldo de forma dinámica -->
+                            <small id="available-balance-text" class="text-muted mt-2 d-block" style="transition: 0.3s;">Saldo disponible: Calculando...</small>
                         </div>
 
                         <!-- Tipo de Transferencia -->
@@ -208,36 +192,73 @@
 <!-- Bootstrap JS & Script del Wizard y Calculadora de Comisiones -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // 1. Control del Flujo del Asistente (Wizard Navigation)
+    // --- 1. FUNCIÓN MATEMÁTICA OFICIAL DE VERIFICACIÓN IBAN (MÓDULO 97) ---
+    function isValidIBANNumber(iban) {
+        iban = iban.replace(/\s/g, ''); // Quitar espacios
+        if (!/^ES\d{22}$/.test(iban)) return false; // Validar estructura básica ES + 22 núm
+
+        // Mover los primeros 4 caracteres al final
+        let rearranged = iban.substring(4) + iban.substring(0, 4);
+
+        // Convertir las letras a números (E=14, S=28)
+        let numericIban = '';
+        for (let i = 0; i < rearranged.length; i++) {
+            let charCode = rearranged.charCodeAt(i);
+            if (charCode >= 65 && charCode <= 90) {
+                numericIban += (charCode - 55).toString();
+            } else {
+                numericIban += rearranged.charAt(i);
+            }
+        }
+
+        // Calcular el Módulo 97 del número gigante de 24+ cifras
+        let remainder = 0;
+        for (let i = 0; i < numericIban.length; i++) {
+            remainder = (remainder * 10 + parseInt(numericIban.charAt(i))) % 97;
+        }
+
+        // Si el resto de dividir todo eso entre 97 es 1, ¡el IBAN es real!
+        return remainder === 1;
+    }
+
+    // --- 2. CONTROL DEL FLUJO (WIZARD) ---
     function goToStep(step) {
-        // Validaciones básicas de campos obligatorios antes de pasar de paso
         if (step === 2) {
             const sourceAcc = document.getElementById('sourceAccount').value;
             if (!sourceAcc) {
                 alert("Por favor, selecciona una cuenta de origen antes de continuar.");
                 return;
             }
+            recalculateFees();
         }
         if (step === 3) {
             const destIban = document.getElementById('destinationIban').value;
             const amt = document.getElementById('amount').value;
+
             if (!destIban || !amt || amt <= 0) {
-                alert("Por favor, introduce un IBAN beneficiario válido y un importe superior a cero.");
+                alert("Por favor, introduce el importe y el IBAN.");
                 return;
             }
 
-            // Actualiza y recalcula el recibo en el paso de confirmación final
+            // Validar que el IBAN matemáticamente existe antes de dejarle seguir
+            if (!isValidIBANNumber(destIban)) {
+                alert("Operación rechazada: El IBAN de destino es incorrecto. Los dígitos de control no coinciden.");
+                return;
+            }
+
+            const maxAllowed = parseFloat(document.getElementById('amount').max);
+            if (parseFloat(amt) > maxAllowed) {
+                alert("Operación rechazada: Fondos insuficientes para cubrir el importe y las comisiones bancarias.");
+                return;
+            }
+
             recalculateFees();
         }
 
-        // Oculta todos los pasos y desactiva las burbujas
         document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.step-bubble').forEach(el => el.classList.remove('active', 'completed'));
-
-        // Activa el paso actual
         document.getElementById(`step-${step}`).classList.add('active');
 
-        // Actualiza el estilo de las burbujas de progreso
         for(let i = 1; i <= 3; i++) {
             const bubble = document.getElementById(`bubble-${i}`);
             if (i < step) {
@@ -248,7 +269,7 @@
         }
     }
 
-    // 2. Motor de Cálculo de Comisiones Bancarias en Tiempo Real (JS)
+    // --- 3. MOTOR DE CÁLCULO DE COMISIONES Y RIESGO ---
     function recalculateFees() {
         const amountInput = document.getElementById('amount');
         const typeSelect = document.getElementById('transferType');
@@ -257,35 +278,77 @@
         const amount = parseFloat(amountInput.value) || 0;
         const type = typeSelect.value;
 
-        // Obtener datos de la moneda de la cuenta emisora seleccionada
         const selectedOption = sourceSelect.options[sourceSelect.selectedIndex];
-        const currency = selectedOption.getAttribute('data-currency') || 'EUR';
+        const currency = selectedOption ? (selectedOption.getAttribute('data-currency') || 'EUR') : 'EUR';
         const symbol = currency === 'EUR' ? ' €' : ' $';
 
-        let fee = 0;
+        const balance = selectedOption ? (parseFloat(selectedOption.getAttribute('data-balance')) || 0) : 0;
 
-        // Lógica de cálculo en cliente que coincide con la de TransferService
-        if (type === 'INSTANT') {
-            fee = 2.50; // Comisión fija de transferencia inmediata
-        } else if (type === 'SWIFT') {
-            fee = amount * 0.015; // 1.5% de comisión internacional
-        } else {
-            fee = 0.00; // SEPA gratuita
-        }
+        let fee = 0;
+        if (type === 'INSTANT') fee = 2.50;
+        else if (type === 'SWIFT') fee = amount * 0.015;
+        else fee = 0.00;
 
         const total = amount + fee;
 
-        // Inyectamos el desglose formateado en el recibo HTML
+        let maxAllowedAmount = balance;
+        if (type === 'INSTANT') maxAllowedAmount = balance - 2.50;
+        if (type === 'SWIFT') maxAllowedAmount = balance / 1.015;
+        if (maxAllowedAmount < 0) maxAllowedAmount = 0;
+
+        amountInput.max = maxAllowedAmount.toFixed(2);
+        const balanceText = document.getElementById('available-balance-text');
+
+        if (total > balance && amount > 0) {
+            amountInput.style.borderColor = 'var(--expense-color)';
+            amountInput.style.boxShadow = '0 0 0 4px rgba(248, 113, 113, 0.1)';
+            balanceText.innerHTML = `<span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill"></i> Saldo excedido (Incluyendo ${fee.toLocaleString('es-ES')} ${symbol} de comisión)</span>`;
+        } else {
+            amountInput.style.borderColor = '';
+            amountInput.style.boxShadow = '';
+            balanceText.innerHTML = `Saldo disponible: <strong class="text-info">${balance.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${symbol}</strong>`;
+        }
+
         document.getElementById('receipt-amount').innerText = amount.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + symbol;
         document.getElementById('receipt-fee').innerText = fee.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + symbol;
         document.getElementById('receipt-type-label').innerText = type;
         document.getElementById('receipt-total').innerText = total.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + symbol;
     }
 
-    // Escucha cambios en inputs para actualizar cálculos al instante
-    document.getElementById('amount').addEventListener('input', recalculateFees);
+    // --- 4. LISTENERS DE SEGURIDAD EN TIEMPO REAL ---
+    document.getElementById('amount').addEventListener('input', function(e) {
+        // Bloquear forzosamente que se escriban más de 2 decimales
+        let val = e.target.value;
+        if (val.includes('.')) {
+            let parts = val.split('.');
+            if (parts[1].length > 2) {
+                e.target.value = parts[0] + '.' + parts[1].substring(0, 2);
+            }
+        }
+        recalculateFees();
+    });
+
     document.getElementById('transferType').addEventListener('change', recalculateFees);
     document.getElementById('sourceAccount').addEventListener('change', recalculateFees);
+
+    document.getElementById('destinationIban').addEventListener('input', function(e) {
+        let input = e.target;
+        let val = input.value.replace(/[^\dA-Z]/gi, '').toUpperCase();
+        if (val.length > 24) val = val.substring(0, 24);
+
+        let isValid = isValidIBANNumber(val); // Aplicar matemática Módulo 97
+
+        input.value = val.match(/.{1,4}/g)?.join(' ') || '';
+
+        const icon = document.getElementById('iban-icon');
+        if (val.length === 0) {
+            icon.className = 'bi bi-bank text-muted';
+        } else if (isValid) {
+            icon.className = 'bi bi-check-circle-fill text-success';
+        } else {
+            icon.className = 'bi bi-x-circle-fill text-danger';
+        }
+    });
 </script>
 </body>
 </html>

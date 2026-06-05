@@ -28,12 +28,14 @@ document.addEventListener("DOMContentLoaded", () => {
     // Función auxiliar para actualizar los textos e iconos del botón de manera limpia
     const updateToggleButtonUI = (isLight) => {
         if (isLight) {
-            toggleIcon.className = 'bi bi-sun-fill me-2 text-warning';
-            toggleText.innerText = 'Modo Claro';
-            themeToggleBtn.style.color = '#0f172a'; // Ajusta texto en modo claro
-        } else {
+            // Si estamos en Modo Claro, el botón sugiere cambiar a Modo Oscuro
             toggleIcon.className = 'bi bi-moon-stars-fill me-2 text-warning';
             toggleText.innerText = 'Modo Oscuro';
+            themeToggleBtn.style.color = '#0f172a'; // Ajusta texto en modo claro
+        } else {
+            // Si estamos en Modo Oscuro, el botón sugiere cambiar a Modo Claro
+            toggleIcon.className = 'bi bi-sun-fill me-2 text-warning';
+            toggleText.innerText = 'Modo Claro';
             themeToggleBtn.style.color = 'var(--text-muted)';
         }
     };
