@@ -20,6 +20,12 @@ public class AuthController {
         this.userService = userService;
     }
 
+    // Redirección automática de la raíz al login
+    @GetMapping("/")
+    public String rootRedirect() {
+        return "redirect:/login";
+    }
+
     @GetMapping("/login")
     public String showLoginForm() {
         return "auth/login";
