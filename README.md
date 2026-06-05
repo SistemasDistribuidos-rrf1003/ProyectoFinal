@@ -58,7 +58,7 @@ El sistema está diseñado de forma realista, separando la lógica y permisos de
 Por defecto, al crear la base de datos, el sistema inyecta un Administrador (Data Seeder):
 
 - Email: admin@banksphere.com
-- Contraseña: admin123
+- Contraseña: password123
 
 Como administrador de BankSphere, tus tareas principales son:
 
