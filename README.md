@@ -53,12 +53,18 @@ Una vez que el despliegue termine y los contenedores estén en verde, tendrás a
 
 El sistema está diseñado de forma realista, separando la lógica y permisos de los Administradores (trabajadores del banco) y los Clientes.
 
-#### 1. Iniciar como Administrador
-   
-Por defecto, al crear la base de datos, el sistema inyecta un Administrador (Data Seeder):
+**Ruta de acceso por defecto:** `http://localhost:8080/login`  
+**Contraseña universal:** Para simplificar las pruebas, todos los usuarios utilizan la misma contraseña: `password123`
 
-- Email: admin@banksphere.com
-- Contraseña: password123
+### 📋 Perfiles Disponibles
+
+| Tipo de Usuario | Email de Acceso | Contraseña | Rol | Descripción / Estado |
+| :--- | :--- | :--- | :---: | :--- |
+| **Administrador Global** | `admin@banksphere.com` | `password123` | `ADMIN` | Acceso global a la plataforma y configuraciones. (Usuario: Sofía Martínez). |
+| **Cliente Estándar** | `client@banksphere.com` | `password123` | `USER` | Cliente verificado con saldo y cuentas activas. Ideal para probar simulaciones de transferencias (Usuario: Javier Gómez). |
+| **Cliente Estándar 2** | `client2@banksphere.com` | `password123` | `USER` | Cliente secundario configurado directamente como `ACTIVE`. Perfecto para usarlo como destinatario en las pruebas de transferencias entre cuentas de la plataforma (Usuario: Laura Sanz). |
+
+#### 1. Iniciar como Administrador
 
 Como administrador de BankSphere, tus tareas principales son:
 
@@ -82,3 +88,4 @@ Para probar la aplicación y el flujo completo como un usuario final:
 
 - Chat de Soporte en Vivo: Verás un botón flotante abajo a la izquierda en la pantalla. Al abrirlo y escribir un mensaje, viajará a través del protocolo WebSocket en tiempo real hacia el microservicio de notificaciones, y nuestro Bot Asistente Virtual programado te devolverá una respuesta dinámica automática.
 - Recuperación de Contraseña: Si cierras sesión y vas a "¿Olvidaste tu contraseña?", el servidor generará un token de recuperación. Podrás simular que abres tu bandeja de entrada y lees este correo accediendo al panel web del sandbox Mailpit (http://localhost:8025).
+
